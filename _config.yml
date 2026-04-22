@@ -1,36 +1,53 @@
-# 🚀 SITE-WIDE SEO CONFIGURATION
+# 🚀 2026 MAXIMUM SEO CONFIGURATION FOR SINHALA WALA KATHA
+
+# 💎 SITE IDENTITY
 title: "Sinhala Wal Katha 2026 - අලුත්ම සිංහල වැල් කතා එකතුව"
-description: "ශ්‍රී ලංකාවේ අංක 1 සිංහල වැල් කතා සහ wala katha එකතුව. දිනපතා අලුත් වන කතා කියවන්න අදම පිවිසෙන්න."
+description: "ශ්‍රී ලංකාවේ අංක 1 සිංහල වැල් කතා සහ wala katha එකතුව. දිනපතා අලුත් වන තාත්වික අම්මා කතා සහ වැල් කතා කියවන්න අදම පිවිසෙන්න."
 url: "https://sinhala-wala-katha.github.io"
 baseurl: "/sinhala-wal-katha"
-
-# 💎 KEYWORD OPTIMIZATION
-keywords: "sinhala wal katha, wal katha, wala katha, ammapa katha, lankan stories, sinhala katha poth, sinhala wal katha 2026"
 author: "Sinhala Wala Katha Brand"
 lang: "si"
+timezone: "Asia/Colombo"
 
-# 🛠️ BUILD SETTINGS
+# 💎 KEYWORD OPTIMIZATION
+keywords: "sinhala wal katha, wal katha, wala katha, ammapa katha, lankan stories, sinhala katha poth, sinhala wal katha 2026, srilankan wal katha, අලුත් වැල් කතා, සිංහල වල් කතා, සිංහල වලා කතා"
+
+# 🛠️ BUILD & ENGINE SETTINGS
 markdown: kramdown
 highlighter: rouge
-lsi: true  # Latent Semantic Indexing (සම්බන්ධිත Keywords හඳුනා ගැනීමට)
+lsi: true  # Latent Semantic Indexing (සම්බන්ධිත Keywords හඳුනා ගැනීමට උපකාරී වේ)
+encoding: "utf-8"
 
-# 🔍 SEO PLUGINS (GitHub Pages Support)
+# 🔍 ADVANCED SEO PLUGINS (GitHub Pages Authorized)
+# අපි Gemfile එකේ ඇතුළත් කළ සියලුම Plugins මෙහි සක්‍රීය කර ඇත.
 plugins:
-  - jekyll-seo-tag
-  - jekyll-sitemap
+  - jekyll-seo-tag        # Google Meta Tags ස්වයංක්‍රීයව සැකසීමට
+  - jekyll-sitemap        # Sitemap.xml ස්වයංක්‍රීයව සැකසීමට
+  - jekyll-feed           # RSS Feed එකක් හරහා ඉක්මනින් Index වීමට
+  - jekyll-gzip           # සයිට් එකේ වේගය (Speed) උපරිම කිරීමට
+  - jekyll-redirect-from  # පරණ ලින්ක් අලුත් ඒවාට හරවා යැවීමට
 
-# 🛡️ FILE EXCLUSIONS (අනවශ්‍ය ෆයිල් Google එකෙන් හංගන්න)
+# 🛡️ SEARCH ENGINE ACCESS CONTROL (Exclusions)
+# Google එකට පෙන්වීමට අනවශ්‍ය Technical ෆයිල් මෙහි අඩංගුයි.
 exclude:
+  - Gemfile
+  - Gemfile.lock
   - README.md
   - LICENSE
   - .github
   - .gitignore
+  - node_modules
+  - vendor
 
-# 📱 SOCIAL MEDIA META
+# 📱 SOCIAL MEDIA META DATA
 twitter:
   username: sinhalawalakhata
   card: summary_large_image
 
 facebook:
-  app_id: 
-  publisher: 
+  app_id: ""
+  publisher: "https://www.facebook.com/sinhalawalakhata"
+
+# 🚀 PERFORMANCE SETTINGS
+sass:
+  style: compressed # CSS ෆයිල් කුඩා කර වේගය වැඩි කරයි
