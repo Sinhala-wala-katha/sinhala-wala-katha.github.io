@@ -4,7 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
+    {% seo %}
+
     <title>Sinhala Wal Katha - අලුත්ම සිංහල වැල් කතා 2026 (Daily Updates)</title>
+    
     <meta name="description" content="2026 හොඳම සිංහල වැල් කතා (Sinhala Wal Katha) සහ අලුත්ම රොමැන්ටික් wala katha එකතුව. දිනපතා අලුත් වන තාත්වික අම්මා කතා සහ වැල් කතා කියවන්න අදම පිවිසෙන්න.">
     <meta name="keywords" content="sinhala wal katha, wala katha, wal katha, ammapa katha, lankan stories, sinhala katha poth, sinhala wal katha 2026, අලුත් වැල් කතා, සිංහල වල් කතා, සිංහල වලා කතා, lankan wal katha, sinhala story">
     <meta name="author" content="Sinhala Wala Katha">
@@ -15,6 +18,7 @@
 
     <link rel="icon" type="image/jpeg" href="logo.jpg">
     <link rel="apple-touch-icon" href="logo.jpg">
+    <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#d32f2f">
 
     <meta property="og:locale" content="si_LK">
@@ -73,7 +77,6 @@
         .hidden-seo { font-size: 14px; color: var(--secondary); margin-top: 15px; opacity: 0.1; }
         .footer { padding: 30px; font-size: 15px; color: #888; border-top: 1px solid #eee; background: #fff; margin-top: 30px; }
         
-        /* SEO Content Section - Helps Google understand context */
         .seo-content { max-width: 800px; margin: 0 auto; padding: 20px; text-align: left; font-size: 16px; color: #444; line-height: 1.8; }
         .seo-content h2 { color: var(--primary); font-size: 24px; }
     </style>
@@ -89,7 +92,6 @@
                 return true;
             }
         };
-        // Disable F12
         document.addEventListener("keydown", function (e) {
             if (e.key === "F12") { e.preventDefault(); }
         });
