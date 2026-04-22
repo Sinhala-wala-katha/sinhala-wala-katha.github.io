@@ -12,7 +12,7 @@ Disallow: /LICENSE
 Disallow: /.github/
 
 # 🗺️ SITEMAP LOCATION (RANKING BOOST)
-Sitemap: https://sinhala-wala-katha.github.io/sinhala-wal-katha/sitemap.xml
+Sitemap: https://sinhala-wala-katha.github.io/sitemap.xml
 
 # 🏎️ CRAWL-DELAY (FOR STABILITY)
 Crawl-delay: 1
