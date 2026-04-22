@@ -1,0 +1,18 @@
+# 🚀 SEO MAXIMIZED ROBOTS.TXT FOR SINHALA WALA KATHA
+# Optimized for Googlebot, Bingbot, and Yandex
+
+User-agent: *
+Allow: /
+Allow: /index.html
+Allow: /logo.jpg
+
+# 🛡️ PROTECT SENSITIVE DIRECTORIES
+Disallow: /README.md
+Disallow: /LICENSE
+Disallow: /.github/
+
+# 🗺️ SITEMAP LOCATION (RANKING BOOST)
+Sitemap: https://sinhala-wala-katha.github.io/sinhala-wal-katha/sitemap.xml
+
+# 🏎️ CRAWL-DELAY (FOR STABILITY)
+Crawl-delay: 1
