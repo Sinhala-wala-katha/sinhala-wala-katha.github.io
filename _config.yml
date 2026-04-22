@@ -4,7 +4,7 @@
 title: "Sinhala Wal Katha 2026 - අලුත්ම සිංහල වැල් කතා එකතුව"
 description: "ශ්‍රී ලංකාවේ අංක 1 සිංහල වැල් කතා සහ wala katha එකතුව. දිනපතා අලුත් වන තාත්වික අම්මා කතා සහ වැල් කතා කියවන්න අදම පිවිසෙන්න."
 url: "https://sinhala-wala-katha.github.io"
-baseurl: "/sinhala-wal-katha"
+baseurl: "" # 👈 දැන් මේක මෙහෙම හිස්ව තියෙන්න ඕනේ (Sub-path එක අයින් කළ නිසා)
 author: "Sinhala Wala Katha Brand"
 lang: "si"
 timezone: "Asia/Colombo"
@@ -15,7 +15,7 @@ keywords: "sinhala wal katha, wal katha, wala katha, ammapa katha, lankan storie
 # 🛠️ BUILD & ENGINE SETTINGS
 markdown: kramdown
 highlighter: rouge
-lsi: true  # Latent Semantic Indexing (සම්බන්ධිත Keywords හඳුනා ගැනීමට උපකාරී වේ)
+lsi: true  # Latent Semantic Indexing
 encoding: "utf-8"
 
 # 🔍 ADVANCED SEO PLUGINS (GitHub Pages Authorized)
