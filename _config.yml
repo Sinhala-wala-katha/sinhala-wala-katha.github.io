@@ -4,10 +4,11 @@
 title: "Sinhala Wal Katha 2026 - අලුත්ම සිංහල වැල් කතා එකතුව"
 description: "ශ්‍රී ලංකාවේ අංක 1 සිංහල වැල් කතා සහ wala katha එකතුව. දිනපතා අලුත් වන තාත්වික අම්මා කතා සහ වැල් කතා කියවන්න අදම පිවිසෙන්න."
 url: "https://sinhala-wala-katha.github.io"
-baseurl: "" # 👈 දැන් මේක මෙහෙම හිස්ව තියෙන්න ඕනේ (Sub-path එක අයින් කළ නිසා)
-author: "Sinhala Wala Katha Brand"
-lang: "si"
-timezone: "Asia/Colombo"
+baseurl: "" 
+# ☝️ Main Domain එක නිසා මේක හිස්ව තියෙන්න ඕනේ.
+
+# 🔗 REPOSITORY SETTINGS (Fixes "No repo name found" error)
+repository: "sinhala-wala-katha/sinhala-wala-katha.github.io"
 
 # 💎 KEYWORD OPTIMIZATION
 keywords: "sinhala wal katha, wal katha, wala katha, ammapa katha, lankan stories, sinhala katha poth, sinhala wal katha 2026, srilankan wal katha, අලුත් වැල් කතා, සිංහල වල් කතා, සිංහල වලා කතා"
@@ -15,18 +16,18 @@ keywords: "sinhala wal katha, wal katha, wala katha, ammapa katha, lankan storie
 # 🛠️ BUILD & ENGINE SETTINGS
 markdown: kramdown
 highlighter: rouge
-lsi: true  # Latent Semantic Indexing
+lsi: true
 encoding: "utf-8"
 
-# 🔍 ADVANCED SEO PLUGINS (GitHub Pages Authorized)
+# 🔍 ADVANCED SEO PLUGINS
 plugins:
-  - jekyll-seo-tag        # Google Meta Tags ස්වයංක්‍රීයව සැකසීමට
-  - jekyll-sitemap        # Sitemap.xml ස්වයංක්‍රීයව සැකසීමට
-  - jekyll-feed           # RSS Feed එකක් හරහා ඉක්මනින් Index වීමට
-  - jekyll-gzip           # සයිට් එකේ වේගය (Speed) උපරිම කිරීමට
-  - jekyll-redirect-from  # පරණ ලින්ක් අලුත් ඒවාට හරවා යැවීමට
+  - jekyll-seo-tag
+  - jekyll-sitemap
+  - jekyll-feed
+  - jekyll-gzip
+  - jekyll-redirect-from
 
-# 🛡️ SEARCH ENGINE ACCESS CONTROL (Exclusions)
+# 🛡️ SEARCH ENGINE ACCESS CONTROL
 exclude:
   - Gemfile
   - Gemfile.lock
@@ -48,4 +49,4 @@ facebook:
 
 # 🚀 PERFORMANCE SETTINGS
 sass:
-  style: compressed # CSS ෆයිල් කුඩා කර වේගය වැඩි කරයි
+  style: compressed
