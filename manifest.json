@@ -1,26 +1,41 @@
 {
-  "short_name": "Wal Katha",
-  "name": "Sinhala Wal Katha 2026 - අලුත්ම වැල් කතා",
-  "description": "ශ්‍රී ලංකාවේ අංක 1 සිංහල වැල් කතා සහ wala katha එකතුව. දිනපතා අලුත් වන කතා කියවන්න.",
+  "name": "Sinhala Wala Katha - සිංහල වල් කතා 2026",
+  "short_name": "Wala Katha",
+  "description": "ශ්‍රී ලංකාවේ විශාලතම සිංහල වල් කතා එකතුව. Sinhala Wala Katha, Amma Katha සහ Romantic කතා දිනපතා අලුත් වේ.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#000000",
+  "theme_color": "#d32f2f",
+  "lang": "si",
+  "dir": "ltr",
+  "categories": ["entertainment", "books", "lifestyle"],
+  "keywords": "sinhala wala katha, wal katha, wala katha 2026, සිංහල වල් කතා, amma katha, lankan stories",
   "icons": [
     {
       "src": "logo.jpg",
       "sizes": "192x192",
       "type": "image/jpeg",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "logo.jpg",
       "sizes": "512x512",
-      "type": "image/jpeg"
+      "type": "image/jpeg",
+      "purpose": "any maskable"
     }
   ],
-  "start_url": "https://sinhala-wala-katha.github.io/",
-  "display": "standalone",
-  "theme_color": "#d32f2f",
-  "background_color": "#ffffff",
-  "orientation": "portrait",
-  "scope": "https://sinhala-wala-katha.github.io/",
-  "lang": "si",
-  "dir": "ltr"
+  "screenshots": [
+    {
+      "src": "logo.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "form_factor": "narrow",
+      "label": "Sinhala Wala Katha Home"
+    }
+  ],
+  "prefer_related_applications": false,
+  "related_applications": [],
+  "id": "sinhala-wala-katha-2026"
 }
