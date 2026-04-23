@@ -1,50 +1,469 @@
+```html
 <!DOCTYPE html>
 <html lang="si">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>404 - පිටුව හමු නොවීය | Sinhala Wal Katha 2026</title>
-    
-    <meta name="robots" content="noindex, follow"> <style>
-        :root { --primary: #d32f2f; --dark: #1a1a1a; --light: #ffffff; }
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; 
-            margin: 0; padding: 0; background: #f4f7f6; color: var(--dark); text-align: center; 
-            display: flex; align-items: center; justify-content: center; height: 100vh;
+
+    <title>404 - පිටුව හමු නොවීය | Sinhala Wala Katha 2026</title>
+    <meta name="description" content="ඔබ සොයන Sinhala Wala Katha පිටුව හමු නොවීය. නමුත් අපගේ සම්පූර්ණ සිංහල වල් කතා එකතුව මෙතනින් කියවන්න.">
+    <meta name="keywords" content="sinhala wala katha, sinhala wal katha, 404, page not found, සිංහල වල් කතා">
+    <meta name="robots" content="noindex, follow">
+    <link rel="canonical" href="https://sinhala-wala-katha.github.io/">
+
+    <link rel="icon" type="image/jpeg" href="logo.jpg">
+    <link rel="apple-touch-icon" href="logo.jpg">
+    <meta name="theme-color" content="#d32f2f">
+
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="404 - පිටුව හමු නොවීය | Sinhala Wala Katha">
+    <meta property="og:description" content="ඔබ සොයන පිටුව හමු නොවීය. අපගේ සිංහල වල් කතා එකතුව වෙත ආපසු යන්න.">
+    <meta property="og:url" content="https://sinhala-wala-katha.github.io/">
+    <meta property="og:image" content="https://sinhala-wala-katha.github.io/logo.jpg">
+    <meta property="og:site_name" content="Sinhala Wala Katha">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="404 | Sinhala Wala Katha">
+    <meta name="twitter:description" content="ඔබ සොයන පිටුව හමු නොවීය.">
+    <meta name="twitter:image" content="https://sinhala-wala-katha.github.io/logo.jpg">
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "404 - Page Not Found | Sinhala Wala Katha",
+      "url": "https://sinhala-wala-katha.github.io/404.html",
+      "description": "Page not found on Sinhala Wala Katha - the largest collection of Sinhala Wala Katha stories.",
+      "isPartOf": {
+        "@type": "WebSite",
+        "name": "Sinhala Wala Katha",
+        "url": "https://sinhala-wala-katha.github.io/"
+      }
+    }
+    </script>
+
+    <style>
+        :root {
+            --primary: #e53935;
+            --primary-dark: #b71c1c;
+            --bg: #000000;
+            --card: #111111;
+            --border: #2a2a2a;
+            --text: #f0f0f0;
+            --muted: #888888;
         }
-        .container { max-width: 600px; padding: 20px; background: white; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
-        h1 { font-size: 80px; margin: 0; color: var(--primary); }
-        h2 { font-size: 24px; margin: 10px 0; }
-        p { font-size: 18px; color: #666; margin-bottom: 30px; }
-        
-        .home-btn { 
-            display: inline-block; background: var(--primary); color: white; 
-            padding: 15px 35px; text-decoration: none; border-radius: 50px; 
-            font-size: 20px; font-weight: bold; transition: 0.3s; 
-            box-shadow: 0 5px 15px rgba(211, 47, 47, 0.3);
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            overflow: hidden;
+            -webkit-user-select: none;
+            user-select: none;
         }
-        .home-btn:hover { transform: scale(1.05); background: #b71c1c; }
-        
-        .trending-links { margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px; }
-        .trending-links a { color: var(--primary); text-decoration: none; font-weight: bold; margin: 0 10px; font-size: 14px; }
+
+        /* ===== PARTICLES ===== */
+        .particles {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .particle {
+            position: absolute;
+            bottom: -10px;
+            border-radius: 50%;
+            background: rgba(229,57,53,0.12);
+            animation: floatUp linear infinite;
+        }
+        @keyframes floatUp {
+            0%   { transform: translateY(0) scale(1); opacity: 0.6; }
+            100% { transform: translateY(-100vh) scale(0); opacity: 0; }
+        }
+
+        /* ===== MAIN WRAP ===== */
+        .wrap {
+            position: relative;
+            z-index: 1;
+            padding: 30px 20px;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        /* ===== 404 NUMBER ANIMATION ===== */
+        .error-num {
+            font-size: clamp(100px, 25vw, 180px);
+            font-weight: 900;
+            line-height: 1;
+            background: linear-gradient(135deg, #e53935, #ff6f60, #e53935);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradientShift 3s ease infinite, bounceIn 0.8s cubic-bezier(0.175,0.885,0.32,1.275) forwards;
+            filter: drop-shadow(0 0 30px rgba(229,57,53,0.5));
+            opacity: 0;
+        }
+        @keyframes gradientShift {
+            0%,100% { background-position: 0% 50%; }
+            50%      { background-position: 100% 50%; }
+        }
+        @keyframes bounceIn {
+            0%   { opacity: 0; transform: scale(0.3) rotate(-10deg); }
+            50%  { opacity: 1; transform: scale(1.1) rotate(3deg); }
+            70%  { transform: scale(0.95) rotate(-2deg); }
+            100% { opacity: 1; transform: scale(1) rotate(0deg); }
+        }
+
+        /* ===== GLITCH EFFECT ===== */
+        .glitch {
+            position: relative;
+            display: inline-block;
+        }
+        .glitch::before,
+        .glitch::after {
+            content: '404';
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: linear-gradient(135deg, #e53935, #ff6f60, #e53935);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .glitch::before {
+            animation: glitch1 2s infinite;
+            clip-path: polygon(0 0, 100% 0, 100% 35%, 0 35%);
+        }
+        .glitch::after {
+            animation: glitch2 2s infinite;
+            clip-path: polygon(0 65%, 100% 65%, 100% 100%, 0 100%);
+        }
+        @keyframes glitch1 {
+            0%,90%,100% { transform: translate(0); }
+            92% { transform: translate(-3px, 1px); }
+            94% { transform: translate(3px, -1px); }
+            96% { transform: translate(-2px, 2px); }
+        }
+        @keyframes glitch2 {
+            0%,90%,100% { transform: translate(0); }
+            93% { transform: translate(3px, -2px); }
+            95% { transform: translate(-3px, 1px); }
+            97% { transform: translate(2px, -1px); }
+        }
+
+        /* ===== FLOATING BOOK ICON ===== */
+        .icon-wrap {
+            font-size: 70px;
+            margin: 10px 0;
+            opacity: 0;
+            animation: fadeUp 0.8s ease 0.6s forwards;
+        }
+        .book-icon {
+            display: inline-block;
+            animation: floatBook 3s ease-in-out infinite;
+        }
+        @keyframes floatBook {
+            0%,100% { transform: translateY(0) rotate(-5deg); }
+            50%      { transform: translateY(-15px) rotate(5deg); }
+        }
+
+        /* ===== TITLE ===== */
+        .title {
+            font-size: clamp(18px, 4vw, 26px);
+            color: var(--primary);
+            font-weight: bold;
+            margin: 10px 0 8px;
+            opacity: 0;
+            animation: fadeUp 0.8s ease 0.8s forwards;
+            text-shadow: 0 0 20px rgba(229,57,53,0.4);
+        }
+
+        /* ===== SUBTITLE ===== */
+        .subtitle {
+            font-size: 15px;
+            color: var(--muted);
+            margin-bottom: 25px;
+            opacity: 0;
+            animation: fadeUp 0.8s ease 1s forwards;
+            line-height: 1.7;
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ===== INFO CARD ===== */
+        .info-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-left: 4px solid var(--primary);
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 25px;
+            font-size: 14px;
+            color: #cccccc;
+            text-align: left;
+            opacity: 0;
+            animation: fadeUp 0.8s ease 1.2s forwards;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        }
+        .info-card strong {
+            color: var(--primary);
+        }
+
+        /* ===== BUTTONS ===== */
+        .btn-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
+            opacity: 0;
+            animation: fadeUp 0.8s ease 1.4s forwards;
+        }
+
+        .btn-home {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--primary);
+            color: #fff;
+            padding: 14px 32px;
+            text-decoration: none;
+            border-radius: 50px;
+            font-size: 17px;
+            font-weight: bold;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.2s, background 0.2s;
+            animation: glowBtn 2s ease-in-out 2s infinite;
+        }
+        @keyframes glowBtn {
+            0%,100% { box-shadow: 0 0 10px rgba(229,57,53,0.3); }
+            50%      { box-shadow: 0 0 25px rgba(229,57,53,0.7), 0 0 50px rgba(229,57,53,0.3); }
+        }
+        .btn-home:hover {
+            background: var(--primary-dark);
+            transform: scale(1.05);
+        }
+        .btn-home:active { transform: scale(0.95); }
+
+        .btn-home .ripple {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.3);
+            transform: scale(0);
+            animation: rippleAnim 0.5s linear;
+            pointer-events: none;
+        }
+        @keyframes rippleAnim {
+            to { transform: scale(4); opacity: 0; }
+        }
+
+        .btn-arrow {
+            display: inline-block;
+            animation: arrowBounce 1s ease-in-out infinite;
+        }
+        @keyframes arrowBounce {
+            0%,100% { transform: translateX(0); }
+            50%      { transform: translateX(6px); }
+        }
+
+        /* ===== SEO KEYWORDS (visible, styled) ===== */
+        .seo-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            margin-top: 25px;
+            opacity: 0;
+            animation: fadeUp 0.8s ease 1.6s forwards;
+        }
+        .seo-tag {
+            background: #1a1a1a;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            font-size: 11px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            transition: 0.2s;
+        }
+        .seo-tag:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        /* ===== COUNTER ===== */
+        .redirect-msg {
+            margin-top: 20px;
+            font-size: 13px;
+            color: var(--muted);
+            opacity: 0;
+            animation: fadeUp 0.8s ease 1.8s forwards;
+        }
+        .counter {
+            color: var(--primary);
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        /* ===== PROGRESS BAR ===== */
+        .progress-wrap {
+            width: 200px;
+            height: 3px;
+            background: var(--border);
+            border-radius: 10px;
+            margin: 8px auto 0;
+            overflow: hidden;
+            opacity: 0;
+            animation: fadeUp 0.8s ease 2s forwards;
+        }
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: var(--primary);
+            border-radius: 10px;
+            animation: progressFill 10s linear 2.2s forwards;
+        }
+        @keyframes progressFill {
+            to { width: 100%; }
+        }
+
+        /* ===== NAVBAR ===== */
+        .navbar {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            background: #0a0a0a;
+            border-bottom: 2px solid var(--primary);
+            padding: 12px 20px;
+            font-weight: bold;
+            font-size: 17px;
+            z-index: 100;
+            opacity: 0;
+            animation: fadeDown 0.8s ease 0.2s forwards;
+        }
+        @keyframes fadeDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .navbar a {
+            color: var(--text);
+            text-decoration: none;
+        }
     </style>
+
+    <script>
+        document.addEventListener('contextmenu', e => e.preventDefault());
+        document.onkeydown = function(e) {
+            if (e.ctrlKey && (e.keyCode===67||e.keyCode===86||e.keyCode===85||e.keyCode===83||(e.shiftKey&&e.keyCode===73))) return false;
+        };
+    </script>
 </head>
 <body>
 
-<div class="container">
-    <h1>404</h1>
-    <h2>අපොයි! මේ පිටුව සොයාගත නොහැක.</h2>
-    <p>ඔබ සොයන <strong>Sinhala Wal Katha</strong> හෝ කතාව මෙහි නොමැති බව පෙනේ. කරුණාකර අපගේ ප්‍රධාන පිටුවට ගොස් අලුත්ම කතා කියවන්න.</p>
-    
-    <a href="https://sinhala-wala-katha.github.io/" class="home-btn">මුල් පිටුවට යන්න</a>
+<div class="particles" id="particles"></div>
 
-    <div class="trending-links">
-        <p style="font-size: 14px; margin-bottom: 10px;">වැඩිපුරම කියවන ඒවා:</p>
-        <a href="https://sinhala-wala-katha.github.io/">Sinhala Wal Katha</a> | 
-        <a href="https://sinhala-wala-katha.github.io/">Wala Katha 2026</a> | 
-        <a href="https://sinhala-wala-katha.github.io/">Ammapa Katha</a>
-    </div>
+<div class="navbar">
+    <a href="https://sinhala-wala-katha.github.io/">📖 Sinhala Wala Katha</a>
 </div>
+
+<div class="wrap" style="margin-top:60px;">
+
+    <div class="error-num">
+        <span class="glitch">404</span>
+    </div>
+
+    <div class="icon-wrap">
+        <span class="book-icon">📚</span>
+    </div>
+
+    <h1 class="title">පිටුව හමු නොවීය!</h1>
+
+    <p class="subtitle">
+        ඔබ සොයන <strong style="color:var(--primary)">Sinhala Wala Katha</strong> පිටුව<br>
+        මෙතන නැහැ — නමුත් අපගේ සම්පූර්ණ කතා එකතුව ඔබ බලාපොරොත්තු වෙනවා! 🇱🇰
+    </p>
+
+    <div class="info-card">
+        <strong>💡 මොකද වුණේ?</strong><br>
+        URL එක වැරදිලා ඇති, link එකක් broken වෙලා ඇති,<br>
+        හෝ කතාව move වෙලා ඇති. කරදරයක් නැහැ — ගෙදර යමු!
+    </div>
+
+    <div class="btn-group">
+        <a href="https://sinhala-wala-katha.github.io/" class="btn-home" id="homeBtn">
+            සිංහල වල් කතා කියවන්න
+            <span class="btn-arrow">→</span>
+        </a>
+    </div>
+
+    <div class="seo-tags">
+        <span class="seo-tag">sinhala wala katha</span>
+        <span class="seo-tag">wal katha 2026</span>
+        <span class="seo-tag">සිංහල කතා</span>
+        <span class="seo-tag">wala katha</span>
+        <span class="seo-tag">amma katha</span>
+        <span class="seo-tag">lankan stories</span>
+    </div>
+
+    <div class="redirect-msg">
+        තත්පර <span class="counter" id="counter">10</span> කින් ස්වයංක්‍රීයව ගෙදර යනවා...
+    </div>
+    <div class="progress-wrap">
+        <div class="progress-bar"></div>
+    </div>
+
+</div>
+
+<script>
+    // Particles
+    const container = document.getElementById('particles');
+    for (let i = 0; i < 25; i++) {
+        const p = document.createElement('div');
+        p.classList.add('particle');
+        const size = 4 + Math.random() * 9;
+        p.style.cssText = `left:${Math.random()*100}%;width:${size}px;height:${size}px;animation-duration:${6+Math.random()*10}s;animation-delay:${Math.random()*8}s`;
+        container.appendChild(p);
+    }
+
+    // Ripple on button
+    const btn = document.getElementById('homeBtn');
+    btn.addEventListener('click', function(e) {
+        const r = document.createElement('span');
+        r.classList.add('ripple');
+        const rect = btn.getBoundingClientRect();
+        const size = Math.max(rect.width, rect.height);
+        r.style.cssText = `width:${size}px;height:${size}px;left:${e.clientX-rect.left-size/2}px;top:${e.clientY-rect.top-size/2}px`;
+        btn.appendChild(r);
+        setTimeout(() => r.remove(), 500);
+    });
+
+    // Countdown redirect
+    let count = 10;
+    const counterEl = document.getElementById('counter');
+    setTimeout(() => {
+        const timer = setInterval(() => {
+            count--;
+            counterEl.textContent = count;
+            if (count <= 0) {
+                clearInterval(timer);
+                window.location.href = 'https://sinhala-wala-katha.github.io/';
+            }
+        }, 1000);
+    }, 2200);
+</script>
 
 </body>
 </html>
+```
