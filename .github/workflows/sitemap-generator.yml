@@ -1,0 +1,34 @@
+name: Generate Static Site Sitemap
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sitemap_job:
+    runs-on: ubuntu-latest
+    name: Generate Sitemap
+    steps:
+    - name: Checkout the repo
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Generate Sitemap
+      uses: cicirello/generate-sitemap@v1
+      with:
+        base-url-path: https://sinhala-wala-katha.github.io/
+        # මෙහි static site එකක් නිසා html ෆයිල් පමණක් සිතියමට එක් කරයි
+        include-pdf: false
+
+    - name: Commit and push sitemap
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git add sitemap.xml
+        git commit -m "Automated sitemap update [skip ci]" || exit 0
+        git push
