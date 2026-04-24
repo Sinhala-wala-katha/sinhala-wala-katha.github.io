@@ -1,59 +1,147 @@
-# 📚 Sinhala Wal Katha 2026 - ශ්‍රී ලංකාවේ අංක 1 සිංහල වැල් කතා එකතුව
+# 🇱🇰 Sinhala Wala Katha - සිංහල වල් කතා 2026
 
-Welcome to the most authoritative collection of **Sinhala Wal Katha** and **Wala Katha** stories online. This repository is dedicated to providing the best reading experience for Sri Lankans searching for high-quality, daily updated **sinhala wal katha** and romantic stories.
+> ශ්‍රී ලංකාවේ විශාලතම **Sinhala Wala Katha** එකතුව | The largest collection of Sinhala Wala Katha stories worldwide
 
-### 🌐 Official Website: [Click Here to Read](https://sinhala-wala-katha.github.io/sinhala-wal-katha/)
 
----
 
-## 🚀 SEO Optimized Topics Covered
-අපගේ වෙබ් අඩවිය හරහා ඔබට පහත සඳහන් සියලුම කාණ්ඩ යටතේ අලුත්ම කතා කියවිය හැකිය:
+![Site Status](https://img.shields.io/website?url=https%3A%2F%2Fsinhala-wala-katha.github.io&label=Site%20Status&color=d32f2f)
 
-* **Sinhala Wal Katha (සිංහල වැල් කතා):** දිනපතා අලුත් වන තාත්වික වැල් කතා.
-* **Wala Katha 2026:** වසරේ ජනප්‍රියම සහ අලුත්ම කතා මාලා.
-* **Ammapa Katha (අම්මා කතා):** පවුලේ කතා සහ තාත්වික අත්දැකීම්.
-* **Lankan Stories:** ශ්‍රී ලාංකික අනන්‍යතාවය සහිත රසවත් කතා.
-* **Romantic Stories:** ආදරණීය සහ හැඟුම්බර රොමැන්ටික් කතා.
-Stay updated with the most searched categories in the Sinhala story industry:
-1. **Latest Sinhala Wal Katha:** Fresh stories added every 24 hours.
-2. **Trending Wala Katha:** The most viral stories of the year.
-3. **Realistic Lankan Stories:** Authentic and engaging local narratives.
-4. **Professional Storytelling:** Well-written and formatted Sinhala text.
 
-## 🎯 Why Read Our Stories?
-1.  **Daily Updates:** දිනපතා අලුත් කතා එකතු කරනු ලැබේ.
-2.  **Mobile Friendly:** ඕනෑම ජංගම දුරකථනයකින් පහසුවෙන් කියවිය හැක.
-3.  **High-Quality Content:** ගුණාත්මක සහ තාත්වික අන්තර්ගතය.
-4.  **100% Free:** සියලුම කතා නොමිලේ කියවීමේ අවස්ථාව.
 
-## 🛠️ Technical Details
-This site is optimized for Google Search Ranking using:
-- **Exact Match Keywords:** Targetting "Sinhala Wal Katha" & "Wala Katha".
-- **Schema Markup:** Structured data for better snippet ranking.
-- **Fast Hosting:** Hosted on GitHub Pages for 99.9% uptime.
-- **Anti-Copy Protection:** Advanced scripts to protect content from unauthorized copying.
-- **Fast Loading:** Optimized assets for instant page loads on any network.
-- **SSL Secured:** Hosted via GitHub Pages for maximum security and trust.
----
 
-## 💎 Maximum SEO Optimization Features
-This repository is engineered for high-performance ranking on Google Search:
+![GitHub Pages](https://img.shields.io/badge/Hosted%20on-GitHub%20Pages-d32f2f?logo=github)
 
-* **Primary Keyword Focus:** Optimized for "Sinhala Wal Katha" and "Wala Katha" exact matches.
-* **Semantic Content Indexing:** Using LSI keywords like *ammapa katha, aluth wal katha,* and *lankan stories*.
-* **Schema Markup Integration:** Ready-to-index JSON-LD data for Google Rich Snippets.
-* **Mobile-First Experience:** Fully responsive UI/UX for the best reading experience on smartphones.
+
+
+
+![Language](https://img.shields.io/badge/Language-Sinhala%20%7C%20English-d32f2f)
+
+
+
+
+![Audience](https://img.shields.io/badge/Audience-Worldwide-d32f2f)
+
+
+
+
+![License](https://img.shields.io/badge/License-All%20Rights%20Reserved-d32f2f)
+
+
 
 ---
 
-### 🔍 Metadata Summary
-**Project Name:** Sinhala Wal Katha 2026  
-**Primary Keywords:** *sinhala wal katha, wal katha, wala katha, ammapa katha, lankan stories, sinhala katha poth, sinhala wal katha 2026, අලුත් වැල් කතා, සිංහල වල් කතා, සිංහල වලා කතා, sinhala wela katha, srilankan wal katha.*
+## 🌐 Live Site
+
+**👉 https://sinhala-wala-katha.github.io/**
 
 ---
 
-**Keywords:** *sinhala wal katha, wal katha, wala katha, ammapa katha, lankan stories, sinhala katha poth, sinhala wal katha 2026, අලුත් වැල් කතා, සිංහල වල් කතා, සිංහල වලා කතා*
+## 📖 ගැන | About
+
+**Sinhala Wala Katha** වෙබ් අඩවිය ශ්‍රී ලංකාවේ සහ ලොව පුරා සිටින සිංහල පාඨකයන් සඳහා නිර්මාණය කරන ලද අලුත්ම සිංහල වල් කතා, අම්මා කතා සහ රොමැන්ටික් කතා එකතුවකි.
+
+This platform is dedicated to providing the best **Sinhala Wala Katha**, **Amma Katha**, and romantic stories for Sri Lankans worldwide. Updated daily with fresh content.
 
 ---
 
-© 2026 Sinhala Wala Katha Brand. All Rights Reserved.
+## ✨ විශේෂාංග | Features
+
+- 📚 **Daily Updates** — දිනපතා අලුත් Sinhala Wala Katha
+- 🌍 **Worldwide Access** — ලොව ඕනෑම රටකින් කියවන්න
+- 📱 **Mobile Friendly** — Phone, Tablet, Desktop සියල්ලට
+- ⚡ **Fast Loading** — GitHub Pages CDN via instant load
+- 🔒 **HTTPS Secure** — SSL encrypted ✅
+- 🌙 **Dark Theme** — Eye-friendly dark design
+- 🎭 **Animated UI** — Modern 2026 animations
+
+---
+
+## 🗂️ File Structure
+
+```
+sinhala-wala-katha.github.io/
+│
+├── index.html          # Main page - Sinhala Wala Katha home
+├── 404.html            # Custom error page
+├── sitemap.xml         # SEO sitemap
+├── robots.txt          # Google bot instructions
+├── ads.txt             # Ad network authorization
+├── manifest.json       # PWA manifest
+├── browserconfig.xml   # Windows tile config
+├── security.txt        # Security contact
+├── humans.txt          # Team info
+├── logo.jpg            # Site logo
+│
+└── .github/
+    └── workflows/
+        └── static.yml  # GitHub Actions deploy
+```
+
+---
+
+## 🔍 SEO Keywords
+
+```
+sinhala wala katha | wal katha | wala katha 2026
+sinhala wal katha | amma katha | lankan stories
+සිංහල වල් කතා | සිංහල වලා කතා | අලුත් වල් කතා
+srilankan wal katha | sinhala katha | romantic katha
+```
+
+---
+
+## 🚀 Technology Stack
+
+| Technology | Usage |
+|-----------|-------|
+| HTML5 | Structure |
+| CSS3 Animations | Modern UI |
+| JavaScript | Interactive features |
+| GitHub Pages | Free hosting |
+| GitHub Actions | Auto deployment |
+| Static HTML | Fast delivery |
+
+---
+
+## 📊 Site Info
+
+| Detail | Value |
+|--------|-------|
+| 🌐 URL | https://sinhala-wala-katha.github.io/ |
+| 📅 Launch | 2026-04-20 |
+| 🗣️ Language | Sinhala / English |
+| 🌍 Audience | Sri Lanka & Worldwide |
+| 📧 Contact | walkatha.com@gmail.com |
+| 🏢 Organization | https://github.com/Sinhala-wala-katha |
+
+---
+
+## 📬 Contact
+
+- 📧 Email: walkatha.com@gmail.com
+- 🐙 GitHub: https://github.com/Sinhala-wala-katha
+- 🌐 Site: https://sinhala-wala-katha.github.io/
+
+---
+
+## ⚖️ License
+
+© 2026 Sinhala Wala Katha. All Rights Reserved.
+
+Unauthorized reproduction or distribution of content is prohibited.
+
+---
+
+<div align="center">
+
+**🇱🇰 Made with ❤️ for Sri Lankans Worldwide**
+
+
+
+![Visit Site](https://img.shields.io/badge/Visit%20Site-Sinhala%20Wala%20Katha-d32f2f?style=for-the-badge)
+
+
+
+https://sinhala-wala-katha.github.io/
+
+</div>
