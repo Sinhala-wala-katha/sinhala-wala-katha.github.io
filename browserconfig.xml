@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<browserconfig>
+  <msapplication>
+    <tile>
+      <square70x70logo src="https://sinhala-wala-katha.github.io/logo.jpg"/>
+      <square150x150logo src="https://sinhala-wala-katha.github.io/logo.jpg"/>
+      <wide310x150logo src="https://sinhala-wala-katha.github.io/logo.jpg"/>
+      <square310x310logo src="https://sinhala-wala-katha.github.io/logo.jpg"/>
+      <TileImage src="https://sinhala-wala-katha.github.io/logo.jpg"/>
+      <TileColor>#d32f2f</TileColor>
+    </tile>
+    <notification>
+      <frequency>30</frequency>
+      <cycle>1</cycle>
+    </notification>
+  </msapplication>
+</browserconfig>
