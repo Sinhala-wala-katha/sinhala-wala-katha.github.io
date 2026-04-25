@@ -17,13 +17,13 @@ jobs:
         with:
           fetch-depth: 0
 
-      # 1. සයිට්මැප් එක සෑදීම (Google Verification ෆයිල් ඉවත් කර පිරිසිදුව සාදයි)
+      # 1. සයිට්මැප් එක සෑදීම
       - name: Generate Sitemap
         uses: cicirello/generate-sitemap@v1
         with:
           base-url-path: https://sinhala-wala-katha.github.io/
-          # Google Search Console ෆයිල් සිතියමට ඒම වැළැක්වීමට මෙය එක් කළා
-          exclude-files: "google*.html"
+          # මෙතනට ෆයිල් එකේ නම හරියටම දුන්නා. දැන් මේක අනිවාර්යයෙන්ම අයින් වෙනවා.
+          exclude-files: googlee91a7f05558ef324.html
           include-pdf: false
 
       # 2. Robots.txt එක සෑදීම
