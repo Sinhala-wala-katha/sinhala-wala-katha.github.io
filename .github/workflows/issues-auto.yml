@@ -70,30 +70,62 @@ jobs:
           PAGE_CONTENT=$(curl -sL --max-time 30 --retry 3 \
             -A "Mozilla/5.0 (compatible; Googlebot/2.1)" \
             "$URL" || echo "")
-          TITLE=$(echo "$PAGE_CONTENT" | grep -oP '(?<=<title>)[^<]*' | head -1 | xargs || echo "")
-          DESC=$(echo "$PAGE_CONTENT" | grep -oP '(?<=<meta name="description" content=")[^"]*' | head -1 | xargs || echo "Best Sinhala Stories")
-          KEYWORDS=$(echo "$PAGE_CONTENT" | grep -oP '(?<=<meta name="keywords" content=")[^"]*' | head -1 | xargs || echo "sinhala stories")
-          CANONICAL=$(echo "$PAGE_CONTENT" | grep -oP '(?<=<link rel="canonical" href=")[^"]*' | head -1 | xargs || echo "$URL")
-          [ -z "$TITLE" ] && TITLE="Sinhala Wala Katha"
+
+          TITLE=$(echo "$PAGE_CONTENT" | grep -oP '(?<=<title>)[^<]*' | head -1 | xargs 2>/dev/null || true)
+          DESC=$(echo "$PAGE_CONTENT" | grep -oP '(?<=<meta name="description" content=")[^"]*' | head -1 | xargs 2>/dev/null || true)
+          KEYWORDS=$(echo "$PAGE_CONTENT" | grep -oP '(?<=<meta name="keywords" content=")[^"]*' | head -1 | xargs 2>/dev/null || true)
+          CANONICAL=$(echo "$PAGE_CONTENT" | grep -oP '(?<=<link rel="canonical" href=")[^"]*' | head -1 | xargs 2>/dev/null || true)
+
+          [ -z "$TITLE" ]     && TITLE="Sinhala Wala Katha"
+          [ -z "$DESC" ]      && DESC="Best Sinhala Stories"
+          [ -z "$KEYWORDS" ]  && KEYWORDS="sinhala stories"
+          [ -z "$CANONICAL" ] && CANONICAL="$URL"
+
+          TITLE=$(echo "$TITLE"       | tr -d '\n\r' | sed 's/[%]//g')
+          DESC=$(echo "$DESC"         | tr -d '\n\r' | sed 's/[%]//g')
+          KEYWORDS=$(echo "$KEYWORDS" | tr -d '\n\r' | sed 's/[%]//g')
+
           LINK_COUNT=$(echo "$PAGE_CONTENT" | grep -oc 'href=' || echo "0")
+
           SITEMAP=$(curl -sL --max-time 15 "${URL}sitemap.xml" || echo "")
           POST_COUNT=$(echo "$SITEMAP" | grep -oc '<loc>' || echo "0")
+
           CURRENT_DATE=$(date +'%Y-%m-%d')
           WEEK_NUM=$(date +'%V')
           YEAR=$(date +'%Y')
           TIMESTAMP=$(date +'%Y-%m-%d %H:%M UTC')
+
+          echo "link_count=${LINK_COUNT}"  >> $GITHUB_OUTPUT
+          echo "post_count=${POST_COUNT}"  >> $GITHUB_OUTPUT
+          echo "today=${CURRENT_DATE}"     >> $GITHUB_OUTPUT
+          echo "week=${WEEK_NUM}"          >> $GITHUB_OUTPUT
+          echo "year=${YEAR}"             >> $GITHUB_OUTPUT
+          echo "canonical=${CANONICAL}"   >> $GITHUB_OUTPUT
+
           {
-            echo "site_title=${TITLE}"
-            echo "site_desc=${DESC}"
-            echo "site_keywords=${KEYWORDS}"
-            echo "canonical=${CANONICAL}"
-            echo "link_count=${LINK_COUNT}"
-            echo "post_count=${POST_COUNT}"
-            echo "today=${CURRENT_DATE}"
-            echo "week=${WEEK_NUM}"
-            echo "year=${YEAR}"
-            echo "timestamp=${TIMESTAMP}"
+            echo "site_title<<__EOF__"
+            echo "${TITLE}"
+            echo "__EOF__"
           } >> $GITHUB_OUTPUT
+
+          {
+            echo "site_desc<<__EOF__"
+            echo "${DESC}"
+            echo "__EOF__"
+          } >> $GITHUB_OUTPUT
+
+          {
+            echo "site_keywords<<__EOF__"
+            echo "${KEYWORDS}"
+            echo "__EOF__"
+          } >> $GITHUB_OUTPUT
+
+          {
+            echo "timestamp<<__EOF__"
+            echo "${TIMESTAMP}"
+            echo "__EOF__"
+          } >> $GITHUB_OUTPUT
+
           echo "✅ Title='${TITLE}' | Links=${LINK_COUNT} | Posts=${POST_COUNT}"
 
       - name: 🆕 Detect New Content
@@ -105,13 +137,16 @@ jobs:
           CURRENT_COUNT="${{ steps.seo_data.outputs.link_count }}"
           CACHE_FILE="${{ env.CACHE_FILE }}"
           FORCE="${{ github.event.inputs.force_new_issue }}"
+
           mkdir -p .github
           if [ -f "$CACHE_FILE" ]; then
             PREV_COUNT=$(cat "$CACHE_FILE" | tr -d '[:space:]')
           else
             PREV_COUNT=0
           fi
+
           echo "📈 Previous: ${PREV_COUNT} | Current: ${CURRENT_COUNT}"
+
           if [ "$CURRENT_COUNT" -gt "$PREV_COUNT" ] 2>/dev/null || [ "$FORCE" = "true" ]; then
             echo "is_new_content=true" >> $GITHUB_OUTPUT
             DIFF=$((CURRENT_COUNT - PREV_COUNT))
@@ -122,6 +157,7 @@ jobs:
             echo "link_diff=0" >> $GITHUB_OUTPUT
             echo "ℹ️ No new content."
           fi
+
           echo "$CURRENT_COUNT" > "$CACHE_FILE"
 
       - name: 💾 Commit Cache Update
@@ -200,6 +236,7 @@ jobs:
           MODE="${{ steps.run_mode.outputs.mode }}"
           DIFF="${{ steps.new_content.outputs.link_diff }}"
           DIFF="${DIFF:-0}"
+
           if [ "$MODE" = "push_check" ]; then
             TRIGGER_BADGE="🆕 New Content Detected (+${DIFF} links)"
           elif [ "$MODE" = "weekly_full" ]; then
@@ -207,6 +244,7 @@ jobs:
           else
             TRIGGER_BADGE="🛠️ Manual Dispatch"
           fi
+
           {
             printf '# 🌐 [%s](%s)\n' "$TITLE" "$CANONICAL"
             printf '### 🆘 SEO Health Report — Week %s (%s)\n\n' "$WEEK" "$TODAY"
@@ -231,12 +269,15 @@ jobs:
             printf '> 🔗 **Visit the site:** [%s](%s)\n\n' "$CANONICAL" "$CANONICAL"
             printf '### 📋 Lychee Link Crawl Report:\n\n'
           } > report.md
+
           cat ./lychee/out.md >> report.md
+
           {
             printf '\n---\n\n'
             printf '© %s [%s](%s) | Auto-generated by SEO Monitor | Week %s (%s)\n' \
               "$YEAR" "$TITLE" "$CANONICAL" "$WEEK" "$TODAY"
           } >> report.md
+
           echo "✅ Report generated — $(wc -l < report.md) lines"
 
       - name: 🏷️ Ensure GitHub Labels Exist
