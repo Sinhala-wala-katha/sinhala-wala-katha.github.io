@@ -3,11 +3,9 @@ name: 🚀 Autonomous SEO Health Monitor 2026
 on:
   push:
     branches: ["main"]
-
   schedule:
     - cron: '0 0 * * *'
     - cron: '0 6 * * 6'
-
   workflow_dispatch:
     inputs:
       force_new_issue:
@@ -35,9 +33,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-        env:
-          # ✅ FIX: Node.js 20 deprecation — opt into Node.js 24 now
-          FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
       - name: 🔍 Detect Site Type
         id: site_type
@@ -182,42 +177,77 @@ jobs:
             git push
           fi
 
-      # ✅ MAIN FIX 1: continue-on-error: true — exit code 2 නිසා workflow fail නොවේ
-      # ✅ MAIN FIX 2: fail: false — lychee result fail නොකරයි
-      - name: 🔗 Scan Links with Lychee
-        uses: lycheeverse/lychee-action@v2
-        id: lychee
-        if: steps.new_content.outputs.should_run == 'true'
-        continue-on-error: true
-        with:
-          args: >-
-            --verbose
-            --no-progress
-            --accept 200,201,301,302,403,429
-            --exclude-mail
-            --exclude '^mailto:'
-            --exclude '^tel:'
-            --exclude '^javascript:'
-            --timeout 20
-            --max-retries 3
-            ${{ env.SITE_URL }}
-          output: ./lychee/out.md
-          fail: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: 🛡️ Ensure Lychee Output Exists
+      # ✅ LYCHEE සම්පූර්ණයෙන් ඉවත් කර curl-based checker — exit code 2 නැත
+      - name: 🔗 Scan Links (curl-based — No Lychee)
+        id: link_scan
         if: steps.new_content.outputs.should_run == 'true'
         run: |
           mkdir -p ./lychee
-          if [ ! -f "./lychee/out.md" ]; then
-            printf '## ⚠️ Scan Result Unavailable\nLychee scan did not produce output.\n' > ./lychee/out.md
-          fi
-          if grep -qiE "\[ERROR\]|\[BROKEN\]|✗" ./lychee/out.md 2>/dev/null; then
-            echo "has_broken_links=true"  >> "$GITHUB_ENV"
-          else
-            echo "has_broken_links=false" >> "$GITHUB_ENV"
-          fi
+          URL="${{ env.SITE_URL }}"
+
+          PAGE=$(curl -sL --max-time 30 -A "Mozilla/5.0" "$URL" || echo "")
+
+          # href links extract
+          LINKS=$(echo "$PAGE" \
+            | grep -oP 'href="[^"]*"' \
+            | grep -oP '(?<=href=")[^"]*' \
+            | grep -v '^mailto:' \
+            | grep -v '^tel:' \
+            | grep -v '^javascript:' \
+            | grep -v '^#' \
+            | sort -u || true)
+
+          TOTAL=0; OK=0; BROKEN=0
+          BROKEN_LIST=""
+
+          while IFS= read -r LINK; do
+            [ -z "$LINK" ] && continue
+
+            # Relative → absolute
+            if [[ "$LINK" == /* ]]; then
+              BASE=$(echo "$URL" | grep -oP 'https?://[^/]+')
+              LINK="${BASE}${LINK}"
+            elif [[ "$LINK" != http* ]]; then
+              LINK="${URL}${LINK}"
+            fi
+
+            STATUS=$(curl -o /dev/null -sL --max-time 10 \
+              -A "Mozilla/5.0" \
+              -w "%{http_code}" "$LINK" 2>/dev/null || echo "000")
+
+            TOTAL=$(( TOTAL + 1 ))
+
+            if echo "$STATUS" | grep -qE '^(2|3|403|429)'; then
+              OK=$(( OK + 1 ))
+            else
+              BROKEN=$(( BROKEN + 1 ))
+              BROKEN_LIST="${BROKEN_LIST}- ❌ [${STATUS}] ${LINK}\n"
+            fi
+          done <<< "$LINKS"
+
+          # Report generate
+          {
+            echo "## 🔗 Link Scan Results"
+            echo ""
+            echo "| Metric | Count |"
+            echo "|--------|-------|"
+            echo "| ✅ OK Links    | ${OK} |"
+            echo "| ❌ Broken Links | ${BROKEN} |"
+            echo "| 🔢 Total Scanned | ${TOTAL} |"
+            echo ""
+            if [ "$BROKEN" -gt 0 ]; then
+              echo "### ❌ Broken Links Found:"
+              echo ""
+              printf "%b" "$BROKEN_LIST"
+            else
+              echo "### ✅ All links are healthy!"
+            fi
+          } > ./lychee/out.md
+
+          echo "ok=${OK}"         >> "$GITHUB_OUTPUT"
+          echo "broken=${BROKEN}" >> "$GITHUB_OUTPUT"
+          echo "total=${TOTAL}"   >> "$GITHUB_OUTPUT"
+          echo "✅ Scan done — OK:${OK} | Broken:${BROKEN} | Total:${TOTAL}"
 
       - name: 📝 Generate Full SEO Report
         if: steps.new_content.outputs.should_run == 'true'
@@ -274,7 +304,7 @@ jobs:
             printf '> Auto-maintained to keep **[%s](%s)** at maximum Google ranking.\n' "$TITLE" "$CANONICAL"
             printf '> Updated on every push and refreshed weekly.\n'
             printf '> 🔗 **Visit:** [%s](%s)\n\n' "$CANONICAL" "$CANONICAL"
-            printf '### 📋 Lychee Link Crawl Report:\n\n'
+            printf '### 📋 Link Crawl Report:\n\n'
           } > report.md
 
           cat ./lychee/out.md >> report.md
@@ -379,15 +409,19 @@ jobs:
           LINKS="${{ steps.seo_data.outputs.link_count }}"
           POSTS="${{ steps.seo_data.outputs.post_count }}"
           RAN="${{ steps.new_content.outputs.should_run }}"
+          OK="${{ steps.link_scan.outputs.ok }}"
+          BROKEN="${{ steps.link_scan.outputs.broken }}"
           {
             echo "## 🚀 SEO Monitor Summary"
             echo ""
             echo "| Field | Value |"
             echo "|-------|-------|"
-            echo "| Run Mode      | ${MODE:-N/A} |"
-            echo "| Date          | ${TODAY:-N/A} |"
-            echo "| Live Links    | ${LINKS:-N/A} |"
-            echo "| Sitemap Posts | ${POSTS:-N/A} |"
-            echo "| Issue Updated | ${RAN:-N/A} |"
-            echo "| Site Type     | ${{ steps.site_type.outputs.label }} |"
+            echo "| Run Mode        | ${MODE:-N/A} |"
+            echo "| Date            | ${TODAY:-N/A} |"
+            echo "| Live Links      | ${LINKS:-N/A} |"
+            echo "| Sitemap Posts   | ${POSTS:-N/A} |"
+            echo "| Issue Updated   | ${RAN:-N/A} |"
+            echo "| ✅ OK Links     | ${OK:-N/A} |"
+            echo "| ❌ Broken Links | ${BROKEN:-N/A} |"
+            echo "| Site Type       | ${{ steps.site_type.outputs.label }} |"
           } >> "$GITHUB_STEP_SUMMARY"
