@@ -1,3 +1,4 @@
+
 name: 🚀 Autonomous SEO Health Monitor 2026
 
 on:
@@ -36,6 +37,9 @@ jobs:
 
       - name: 🔍 Detect Site Type
         id: site_type
+        # ✅ KEY FIX: shell: bash {0} — set -e සහ pipefail disable කරනවා
+        # grep exit code 2 වුනත් workflow fail නොවේ
+        shell: bash {0}
         run: |
           if [ -f "_config.yml" ] || [ -f "Gemfile" ]; then
             echo "type=jekyll"  >> "$GITHUB_OUTPUT"
@@ -47,6 +51,7 @@ jobs:
 
       - name: 🧭 Determine Run Mode
         id: run_mode
+        shell: bash {0}
         run: |
           EVENT="${{ github.event_name }}"
           if [ "$EVENT" = "push" ]; then
@@ -64,16 +69,39 @@ jobs:
 
       - name: 📊 Extract Live SEO Data
         id: seo_data
+        shell: bash {0}
         run: |
           URL="${{ env.SITE_URL }}"
+
           PAGE_CONTENT=$(curl -sL --max-time 30 --retry 3 \
             -A "Mozilla/5.0 (compatible; Googlebot/2.1)" \
-            "$URL" || echo "")
+            "$URL")
+          CURL_EXIT=$?
+          if [ $CURL_EXIT -ne 0 ] || [ -z "$PAGE_CONTENT" ]; then
+            echo "⚠️ Site fetch failed or empty, using defaults"
+            PAGE_CONTENT=""
+          fi
 
-          TITLE=$(echo "$PAGE_CONTENT"     | grep -oP '(?<=<title>)[^<]*'                            | head -1 | xargs 2>/dev/null || true)
-          DESC=$(echo "$PAGE_CONTENT"      | grep -oP '(?<=<meta name="description" content=")[^"]*' | head -1 | xargs 2>/dev/null || true)
-          KEYWORDS=$(echo "$PAGE_CONTENT"  | grep -oP '(?<=<meta name="keywords" content=")[^"]*'    | head -1 | xargs 2>/dev/null || true)
-          CANONICAL=$(echo "$PAGE_CONTENT" | grep -oP '(?<=<link rel="canonical" href=")[^"]*'       | head -1 | xargs 2>/dev/null || true)
+          # ✅ FIX: grep exit code capture — 0,1,2 handle separately
+          TITLE=""
+          if [ -n "$PAGE_CONTENT" ]; then
+            TITLE=$(echo "$PAGE_CONTENT" | grep -oP '(?<=<title>)[^<]*' | head -1 | xargs 2>/dev/null)
+          fi
+
+          DESC=""
+          if [ -n "$PAGE_CONTENT" ]; then
+            DESC=$(echo "$PAGE_CONTENT" | grep -oP '(?<=<meta name="description" content=")[^"]*' | head -1 | xargs 2>/dev/null)
+          fi
+
+          KEYWORDS=""
+          if [ -n "$PAGE_CONTENT" ]; then
+            KEYWORDS=$(echo "$PAGE_CONTENT" | grep -oP '(?<=<meta name="keywords" content=")[^"]*' | head -1 | xargs 2>/dev/null)
+          fi
+
+          CANONICAL=""
+          if [ -n "$PAGE_CONTENT" ]; then
+            CANONICAL=$(echo "$PAGE_CONTENT" | grep -oP '(?<=<link rel="canonical" href=")[^"]*' | head -1 | xargs 2>/dev/null)
+          fi
 
           [ -z "$TITLE" ]     && TITLE="Sinhala Wala Katha"
           [ -z "$DESC" ]      && DESC="Best Sinhala Stories"
@@ -85,12 +113,18 @@ jobs:
           KEYWORDS=$(echo "$KEYWORDS"   | tr -d '\n\r%')
           CANONICAL=$(echo "$CANONICAL" | tr -d '\n\r%')
 
-          LINK_COUNT=$(echo "$PAGE_CONTENT" | grep -c 'href=' || true)
-          [ -z "$LINK_COUNT" ] && LINK_COUNT=0
+          # ✅ FIX: grep -c exit code 1 or 2 → default 0 (|| echo "0")
+          LINK_COUNT=0
+          if [ -n "$PAGE_CONTENT" ]; then
+            LINK_COUNT=$(echo "$PAGE_CONTENT" | grep -c 'href=' || echo "0")
+          fi
 
+          # ✅ FIX: sitemap curl + grep -c safe handling
           SITEMAP=$(curl -sL --max-time 15 "${URL}sitemap.xml" || echo "")
-          POST_COUNT=$(echo "$SITEMAP" | grep -c '<loc>' || true)
-          [ -z "$POST_COUNT" ] && POST_COUNT=0
+          POST_COUNT=0
+          if [ -n "$SITEMAP" ]; then
+            POST_COUNT=$(echo "$SITEMAP" | grep -c '<loc>' || echo "0")
+          fi
 
           CURRENT_DATE=$(date +'%Y-%m-%d')
           WEEK_NUM=$(date +'%V')
@@ -129,9 +163,11 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
           echo "✅ Title='${TITLE}' | Links=${LINK_COUNT} | Posts=${POST_COUNT}"
+          exit 0
 
       - name: 🆕 Detect Content Change (Cache)
         id: new_content
+        shell: bash {0}
         run: |
           MODE="${{ steps.run_mode.outputs.mode }}"
           CURRENT_COUNT="${{ steps.seo_data.outputs.post_count }}"
@@ -140,32 +176,37 @@ jobs:
 
           mkdir -p .github
 
+          PREV_COUNT=0
           if [ -f "$CACHE_FILE" ]; then
             PREV_COUNT=$(cat "$CACHE_FILE" | tr -d '[:space:]')
-          else
-            PREV_COUNT=0
+            [ -z "$PREV_COUNT" ] && PREV_COUNT=0
           fi
 
           echo "📈 Previous: ${PREV_COUNT} | Current: ${CURRENT_COUNT}"
 
+          CURRENT_NUM="${CURRENT_COUNT:-0}"
+          PREV_NUM="${PREV_COUNT:-0}"
+
           if [ "$MODE" = "push_check" ] || \
              [ "$MODE" = "manual" ] || \
              [ "$FORCE" = "true" ] || \
-             [ "${CURRENT_COUNT:-0}" -gt "${PREV_COUNT:-0}" ]; then
+             [ "$CURRENT_NUM" -gt "$PREV_NUM" ]; then
             echo "should_run=true"   >> "$GITHUB_OUTPUT"
-            DIFF=$(( ${CURRENT_COUNT:-0} - ${PREV_COUNT:-0} ))
+            DIFF=$(( CURRENT_NUM - PREV_NUM ))
             echo "post_diff=${DIFF}" >> "$GITHUB_OUTPUT"
             echo "✅ Will create/update issue."
           else
             echo "should_run=false"  >> "$GITHUB_OUTPUT"
             echo "post_diff=0"       >> "$GITHUB_OUTPUT"
-            echo "ℹ️ No change detected, skipping issue update."
+            echo "ℹ️ No change detected, skipping."
           fi
 
           echo "${CURRENT_COUNT}" > "$CACHE_FILE"
+          exit 0
 
       - name: 💾 Commit Cache Update
         if: steps.new_content.outputs.should_run == 'true'
+        shell: bash {0}
         run: |
           git config user.name  "SEO Monitor Bot"
           git config user.email "seo-monitor@github-actions.bot"
@@ -176,26 +217,29 @@ jobs:
             git commit -m "🤖 chore: update seo cache [posts=${{ steps.seo_data.outputs.post_count }}] - ${{ steps.seo_data.outputs.today }}"
             git push
           fi
+          exit 0
 
-      # ✅ LYCHEE සම්පූර්ණයෙන් ඉවත් කර curl-based checker — exit code 2 නැත
-      - name: 🔗 Scan Links (curl-based — No Lychee)
+      - name: 🔗 Scan Links (curl-based)
         id: link_scan
         if: steps.new_content.outputs.should_run == 'true'
+        shell: bash {0}
         run: |
           mkdir -p ./lychee
           URL="${{ env.SITE_URL }}"
 
           PAGE=$(curl -sL --max-time 30 -A "Mozilla/5.0" "$URL" || echo "")
 
-          # href links extract
-          LINKS=$(echo "$PAGE" \
-            | grep -oP 'href="[^"]*"' \
-            | grep -oP '(?<=href=")[^"]*' \
-            | grep -v '^mailto:' \
-            | grep -v '^tel:' \
-            | grep -v '^javascript:' \
-            | grep -v '^#' \
-            | sort -u || true)
+          LINKS=""
+          if [ -n "$PAGE" ]; then
+            LINKS=$(echo "$PAGE" \
+              | grep -oP 'href="[^"]*"' \
+              | grep -oP '(?<=href=")[^"]*' \
+              | grep -v '^mailto:' \
+              | grep -v '^tel:' \
+              | grep -v '^javascript:' \
+              | grep -v '^#' \
+              | sort -u || echo "")
+          fi
 
           TOTAL=0; OK=0; BROKEN=0
           BROKEN_LIST=""
@@ -203,17 +247,15 @@ jobs:
           while IFS= read -r LINK; do
             [ -z "$LINK" ] && continue
 
-            # Relative → absolute
             if [[ "$LINK" == /* ]]; then
-              BASE=$(echo "$URL" | grep -oP 'https?://[^/]+')
+              BASE=$(echo "$URL" | grep -oP 'https?://[^/]+' || echo "")
               LINK="${BASE}${LINK}"
             elif [[ "$LINK" != http* ]]; then
               LINK="${URL}${LINK}"
             fi
 
             STATUS=$(curl -o /dev/null -sL --max-time 10 \
-              -A "Mozilla/5.0" \
-              -w "%{http_code}" "$LINK" 2>/dev/null || echo "000")
+              -A "Mozilla/5.0" -w "%{http_code}" "$LINK" 2>/dev/null || echo "000")
 
             TOTAL=$(( TOTAL + 1 ))
 
@@ -225,22 +267,21 @@ jobs:
             fi
           done <<< "$LINKS"
 
-          # Report generate
           {
             echo "## 🔗 Link Scan Results"
             echo ""
             echo "| Metric | Count |"
             echo "|--------|-------|"
-            echo "| ✅ OK Links    | ${OK} |"
-            echo "| ❌ Broken Links | ${BROKEN} |"
+            echo "| ✅ OK Links      | ${OK} |"
+            echo "| ❌ Broken Links  | ${BROKEN} |"
             echo "| 🔢 Total Scanned | ${TOTAL} |"
             echo ""
             if [ "$BROKEN" -gt 0 ]; then
-              echo "### ❌ Broken Links Found:"
+              echo "### ❌ Broken Links:"
               echo ""
               printf "%b" "$BROKEN_LIST"
             else
-              echo "### ✅ All links are healthy!"
+              echo "### ✅ All links healthy!"
             fi
           } > ./lychee/out.md
 
@@ -248,9 +289,11 @@ jobs:
           echo "broken=${BROKEN}" >> "$GITHUB_OUTPUT"
           echo "total=${TOTAL}"   >> "$GITHUB_OUTPUT"
           echo "✅ Scan done — OK:${OK} | Broken:${BROKEN} | Total:${TOTAL}"
+          exit 0
 
       - name: 📝 Generate Full SEO Report
         if: steps.new_content.outputs.should_run == 'true'
+        shell: bash {0}
         env:
           SITE_TITLE:    ${{ steps.seo_data.outputs.site_title }}
           SITE_DESC:     ${{ steps.seo_data.outputs.site_desc }}
@@ -316,9 +359,11 @@ jobs:
           } >> report.md
 
           echo "✅ Report generated — $(wc -l < report.md) lines"
+          exit 0
 
       - name: 🏷️ Ensure GitHub Labels Exist
         if: steps.new_content.outputs.should_run == 'true'
+        shell: bash {0}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -328,10 +373,12 @@ jobs:
               --description "Auto-managed by SEO Monitor" \
               2>/dev/null || true
           done
+          exit 0
 
       - name: 🔎 Find Existing SEO Issue
         id: find_issue
         if: steps.new_content.outputs.should_run == 'true'
+        shell: bash {0}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -350,9 +397,11 @@ jobs:
             echo "found=false" >> "$GITHUB_OUTPUT"
             echo "ℹ️ No existing issue — will create new."
           fi
+          exit 0
 
       - name: 🆕 Create or Update SEO Issue
         if: steps.new_content.outputs.should_run == 'true'
+        shell: bash {0}
         env:
           GH_TOKEN:   ${{ secrets.GITHUB_TOKEN }}
           SITE_TITLE: ${{ steps.seo_data.outputs.site_title }}
@@ -375,9 +424,11 @@ jobs:
               --label "seo-monitor,automated,link-health"
             echo "✅ New issue created."
           fi
+          exit 0
 
       - name: 📅 Daily Title Date Update
         if: steps.run_mode.outputs.mode == 'daily_date'
+        shell: bash {0}
         env:
           GH_TOKEN:   ${{ secrets.GITHUB_TOKEN }}
           SITE_TITLE: ${{ steps.seo_data.outputs.site_title }}
@@ -398,11 +449,13 @@ jobs:
             gh issue edit "$ISSUE_NUMBER" --title "$NEW_TITLE"
             echo "✅ Title updated: $NEW_TITLE"
           else
-            echo "ℹ️ No open issue found. Skipping."
+            echo "ℹ️ No open issue found."
           fi
+          exit 0
 
       - name: 📋 Workflow Summary
         if: always()
+        shell: bash {0}
         run: |
           MODE="${{ steps.run_mode.outputs.mode }}"
           TODAY="${{ steps.seo_data.outputs.today }}"
@@ -425,3 +478,4 @@ jobs:
             echo "| ❌ Broken Links | ${BROKEN:-N/A} |"
             echo "| Site Type       | ${{ steps.site_type.outputs.label }} |"
           } >> "$GITHUB_STEP_SUMMARY"
+          exit 0
