@@ -27,6 +27,7 @@ env:
 jobs:
   seo-monitor:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
 
@@ -53,13 +54,13 @@ jobs:
           if [ "$EVENT" = "push" ]; then
             echo "mode=push_check" >> "$GITHUB_OUTPUT"
           elif [ "$EVENT" = "workflow_dispatch" ]; then
-            echo "mode=manual" >> "$GITHUB_OUTPUT"
+            echo "mode=manual"     >> "$GITHUB_OUTPUT"
           elif [ "$EVENT" = "schedule" ]; then
             DAY=$(date +'%u')
             if [ "$DAY" = "6" ]; then
               echo "mode=weekly_full" >> "$GITHUB_OUTPUT"
             else
-              echo "mode=daily_date" >> "$GITHUB_OUTPUT"
+              echo "mode=daily_date"  >> "$GITHUB_OUTPUT"
             fi
           fi
 
@@ -131,17 +132,19 @@ jobs:
 
           echo "✅ Title='${TITLE}' | Links=${LINK_COUNT} | Posts=${POST_COUNT}"
 
-      - name: 🆕 Detect New Content
+      # ✅ CORE FIX: Push හිදී සෑම විටම issue create/update කරයි
+      #    Cache logic — post count change detect කිරීමට පමණ
+      #    "New content" = push event නිසා content වෙනස් වී ඇති බව known fact
+      - name: 🆕 Detect Content Change (Cache)
         id: new_content
-        if: |
-          steps.run_mode.outputs.mode == 'push_check' ||
-          steps.run_mode.outputs.mode == 'manual'
         run: |
-          CURRENT_COUNT="${{ steps.seo_data.outputs.link_count }}"
+          MODE="${{ steps.run_mode.outputs.mode }}"
+          CURRENT_COUNT="${{ steps.seo_data.outputs.post_count }}"
           CACHE_FILE="${{ env.CACHE_FILE }}"
           FORCE="${{ github.event.inputs.force_new_issue }}"
 
           mkdir -p .github
+
           if [ -f "$CACHE_FILE" ]; then
             PREV_COUNT=$(cat "$CACHE_FILE" | tr -d '[:space:]')
           else
@@ -150,44 +153,44 @@ jobs:
 
           echo "📈 Previous: ${PREV_COUNT} | Current: ${CURRENT_COUNT}"
 
-          if [ "$FORCE" = "true" ] || [ "${CURRENT_COUNT:-0}" -gt "${PREV_COUNT:-0}" ] 2>/dev/null; then
-            echo "is_new_content=true" >> "$GITHUB_OUTPUT"
+          # ✅ CORE FIX: push mode හිදී සෑම විටම true
+          # ✅ manual/force හිදීත් සෑම විටම true
+          # ✅ schedule හිදී post count change check
+          if [ "$MODE" = "push_check" ] || \
+             [ "$MODE" = "manual" ] || \
+             [ "$FORCE" = "true" ] || \
+             [ "${CURRENT_COUNT:-0}" -gt "${PREV_COUNT:-0}" ]; then
+            echo "should_run=true"   >> "$GITHUB_OUTPUT"
             DIFF=$(( ${CURRENT_COUNT:-0} - ${PREV_COUNT:-0} ))
-            echo "link_diff=${DIFF}"   >> "$GITHUB_OUTPUT"
-            echo "✅ New content! +${DIFF} links"
+            echo "post_diff=${DIFF}" >> "$GITHUB_OUTPUT"
+            echo "✅ Will create/update issue."
           else
-            echo "is_new_content=false" >> "$GITHUB_OUTPUT"
-            echo "link_diff=0"          >> "$GITHUB_OUTPUT"
-            echo "ℹ️ No new content."
+            echo "should_run=false"  >> "$GITHUB_OUTPUT"
+            echo "post_diff=0"       >> "$GITHUB_OUTPUT"
+            echo "ℹ️ No change detected, skipping issue update."
           fi
 
+          # Cache update — post count save
           echo "${CURRENT_COUNT}" > "$CACHE_FILE"
 
       - name: 💾 Commit Cache Update
-        if: |
-          (steps.run_mode.outputs.mode == 'push_check' ||
-           steps.run_mode.outputs.mode == 'manual') &&
-          steps.new_content.outputs.is_new_content == 'true'
+        if: steps.new_content.outputs.should_run == 'true'
         run: |
           git config user.name  "SEO Monitor Bot"
           git config user.email "seo-monitor@github-actions.bot"
           git add "${{ env.CACHE_FILE }}"
           if git diff --staged --quiet; then
-            echo "ℹ️ No cache changes."
+            echo "ℹ️ No cache changes to commit."
           else
-            git commit -m "🤖 chore: update link cache [${{ steps.seo_data.outputs.link_count }} links] - ${{ steps.seo_data.outputs.today }}"
+            git commit -m "🤖 chore: update seo cache [posts=${{ steps.seo_data.outputs.post_count }}] - ${{ steps.seo_data.outputs.today }}"
             git push
           fi
 
-      # ✅ ROOT FIX: continue-on-error REMOVE කළා — fail: false පමණ ඇති විට
-      #    lychee broken links සොයාගෙන exit 2 දුන්නත් workflow continue වේ
+      # ✅ fail: false — broken links ඇතත් workflow fail නොවේ
       - name: 🔗 Scan Links with Lychee
         uses: lycheeverse/lychee-action@v2
         id: lychee
-        if: |
-          steps.new_content.outputs.is_new_content == 'true' ||
-          steps.run_mode.outputs.mode == 'weekly_full' ||
-          steps.run_mode.outputs.mode == 'manual'
+        if: steps.new_content.outputs.should_run == 'true'
         with:
           args: "--verbose --no-progress --accept 200,201,301,302,403,429 --exclude-mail --exclude ^mailto: --exclude ^tel: --exclude ^javascript: --timeout 20 --max-retries 3 ${{ env.SITE_URL }}"
           output: ./lychee/out.md
@@ -196,10 +199,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 🛡️ Ensure Lychee Output Exists
-        if: |
-          steps.new_content.outputs.is_new_content == 'true' ||
-          steps.run_mode.outputs.mode == 'weekly_full' ||
-          steps.run_mode.outputs.mode == 'manual'
+        if: steps.new_content.outputs.should_run == 'true'
         run: |
           mkdir -p ./lychee
           if [ ! -f "./lychee/out.md" ]; then
@@ -212,10 +212,7 @@ jobs:
           fi
 
       - name: 📝 Generate Full SEO Report
-        if: |
-          steps.new_content.outputs.is_new_content == 'true' ||
-          steps.run_mode.outputs.mode == 'weekly_full' ||
-          steps.run_mode.outputs.mode == 'manual'
+        if: steps.new_content.outputs.should_run == 'true'
         env:
           SITE_TITLE:    ${{ steps.seo_data.outputs.site_title }}
           SITE_DESC:     ${{ steps.seo_data.outputs.site_desc }}
@@ -230,7 +227,7 @@ jobs:
           POSTS="${{ steps.seo_data.outputs.post_count }}"
           CANONICAL="${{ steps.seo_data.outputs.canonical }}"
           MODE="${{ steps.run_mode.outputs.mode }}"
-          DIFF="${{ steps.new_content.outputs.link_diff }}"
+          DIFF="${{ steps.new_content.outputs.post_diff }}"
           DIFF="${DIFF:-0}"
 
           TITLE="${SITE_TITLE:-Sinhala Wala Katha}"
@@ -238,9 +235,11 @@ jobs:
           KEYWORDS="${SITE_KEYWORDS:-sinhala stories}"
 
           if [ "$MODE" = "push_check" ]; then
-            TRIGGER_BADGE="🆕 New Content Detected (+${DIFF} links)"
+            TRIGGER_BADGE="🆕 Push — Content Updated"
           elif [ "$MODE" = "weekly_full" ]; then
             TRIGGER_BADGE="🔄 Weekly Scheduled Update"
+          elif [ "$MODE" = "daily_date" ]; then
+            TRIGGER_BADGE="📅 Daily Scheduled Check"
           else
             TRIGGER_BADGE="🛠️ Manual Dispatch"
           fi
@@ -265,7 +264,7 @@ jobs:
             printf '---\n\n'
             printf '## 🛠️ Technical Health Audit\n\n'
             printf '> Auto-maintained to keep **[%s](%s)** at maximum Google ranking.\n' "$TITLE" "$CANONICAL"
-            printf '> Updated every time new content is added, and refreshed weekly.\n'
+            printf '> Updated on every push and refreshed weekly.\n'
             printf '> 🔗 **Visit:** [%s](%s)\n\n' "$CANONICAL" "$CANONICAL"
             printf '### 📋 Lychee Link Crawl Report:\n\n'
           } > report.md
@@ -281,10 +280,7 @@ jobs:
           echo "✅ Report generated — $(wc -l < report.md) lines"
 
       - name: 🏷️ Ensure GitHub Labels Exist
-        if: |
-          steps.new_content.outputs.is_new_content == 'true' ||
-          steps.run_mode.outputs.mode == 'weekly_full' ||
-          steps.run_mode.outputs.mode == 'manual'
+        if: steps.new_content.outputs.should_run == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -297,10 +293,7 @@ jobs:
 
       - name: 🔎 Find Existing SEO Issue
         id: find_issue
-        if: |
-          steps.new_content.outputs.is_new_content == 'true' ||
-          steps.run_mode.outputs.mode == 'weekly_full' ||
-          steps.run_mode.outputs.mode == 'manual'
+        if: steps.new_content.outputs.should_run == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -317,14 +310,11 @@ jobs:
             echo "✅ Found existing issue: #${ISSUE_NUMBER}"
           else
             echo "found=false" >> "$GITHUB_OUTPUT"
-            echo "ℹ️ No existing issue found."
+            echo "ℹ️ No existing issue — will create new."
           fi
 
-      - name: 🆕 Create or Update Issue
-        if: |
-          steps.new_content.outputs.is_new_content == 'true' ||
-          steps.run_mode.outputs.mode == 'weekly_full' ||
-          steps.run_mode.outputs.mode == 'manual'
+      - name: 🆕 Create or Update SEO Issue
+        if: steps.new_content.outputs.should_run == 'true'
         env:
           GH_TOKEN:   ${{ secrets.GITHUB_TOKEN }}
           SITE_TITLE: ${{ steps.seo_data.outputs.site_title }}
@@ -379,7 +369,8 @@ jobs:
           MODE="${{ steps.run_mode.outputs.mode }}"
           TODAY="${{ steps.seo_data.outputs.today }}"
           LINKS="${{ steps.seo_data.outputs.link_count }}"
-          IS_NEW="${{ steps.new_content.outputs.is_new_content }}"
+          POSTS="${{ steps.seo_data.outputs.post_count }}"
+          RAN="${{ steps.new_content.outputs.should_run }}"
           {
             echo "## 🚀 SEO Monitor Summary"
             echo ""
@@ -388,6 +379,7 @@ jobs:
             echo "| Run Mode    | ${MODE:-N/A} |"
             echo "| Date        | ${TODAY:-N/A} |"
             echo "| Live Links  | ${LINKS:-N/A} |"
-            echo "| New Content | ${IS_NEW:-N/A} |"
+            echo "| Sitemap Posts | ${POSTS:-N/A} |"
+            echo "| Issue Updated | ${RAN:-N/A} |"
             echo "| Site Type   | ${{ steps.site_type.outputs.label }} |"
           } >> "$GITHUB_STEP_SUMMARY"
