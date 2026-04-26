@@ -35,6 +35,9 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+        env:
+          # ✅ FIX: Node.js 20 deprecation — opt into Node.js 24 now
+          FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
       - name: 🔍 Detect Site Type
         id: site_type
@@ -132,9 +135,6 @@ jobs:
 
           echo "✅ Title='${TITLE}' | Links=${LINK_COUNT} | Posts=${POST_COUNT}"
 
-      # ✅ CORE FIX: Push හිදී සෑම විටම issue create/update කරයි
-      #    Cache logic — post count change detect කිරීමට පමණ
-      #    "New content" = push event නිසා content වෙනස් වී ඇති බව known fact
       - name: 🆕 Detect Content Change (Cache)
         id: new_content
         run: |
@@ -153,9 +153,6 @@ jobs:
 
           echo "📈 Previous: ${PREV_COUNT} | Current: ${CURRENT_COUNT}"
 
-          # ✅ CORE FIX: push mode හිදී සෑම විටම true
-          # ✅ manual/force හිදීත් සෑම විටම true
-          # ✅ schedule හිදී post count change check
           if [ "$MODE" = "push_check" ] || \
              [ "$MODE" = "manual" ] || \
              [ "$FORCE" = "true" ] || \
@@ -170,7 +167,6 @@ jobs:
             echo "ℹ️ No change detected, skipping issue update."
           fi
 
-          # Cache update — post count save
           echo "${CURRENT_COUNT}" > "$CACHE_FILE"
 
       - name: 💾 Commit Cache Update
@@ -186,13 +182,25 @@ jobs:
             git push
           fi
 
-      # ✅ fail: false — broken links ඇතත් workflow fail නොවේ
+      # ✅ MAIN FIX 1: continue-on-error: true — exit code 2 නිසා workflow fail නොවේ
+      # ✅ MAIN FIX 2: fail: false — lychee result fail නොකරයි
       - name: 🔗 Scan Links with Lychee
         uses: lycheeverse/lychee-action@v2
         id: lychee
         if: steps.new_content.outputs.should_run == 'true'
+        continue-on-error: true
         with:
-          args: "--verbose --no-progress --accept 200,201,301,302,403,429 --exclude-mail --exclude ^mailto: --exclude ^tel: --exclude ^javascript: --timeout 20 --max-retries 3 ${{ env.SITE_URL }}"
+          args: >-
+            --verbose
+            --no-progress
+            --accept 200,201,301,302,403,429
+            --exclude-mail
+            --exclude '^mailto:'
+            --exclude '^tel:'
+            --exclude '^javascript:'
+            --timeout 20
+            --max-retries 3
+            ${{ env.SITE_URL }}
           output: ./lychee/out.md
           fail: false
         env:
@@ -376,10 +384,10 @@ jobs:
             echo ""
             echo "| Field | Value |"
             echo "|-------|-------|"
-            echo "| Run Mode    | ${MODE:-N/A} |"
-            echo "| Date        | ${TODAY:-N/A} |"
-            echo "| Live Links  | ${LINKS:-N/A} |"
+            echo "| Run Mode      | ${MODE:-N/A} |"
+            echo "| Date          | ${TODAY:-N/A} |"
+            echo "| Live Links    | ${LINKS:-N/A} |"
             echo "| Sitemap Posts | ${POSTS:-N/A} |"
             echo "| Issue Updated | ${RAN:-N/A} |"
-            echo "| Site Type   | ${{ steps.site_type.outputs.label }} |"
+            echo "| Site Type     | ${{ steps.site_type.outputs.label }} |"
           } >> "$GITHUB_STEP_SUMMARY"
