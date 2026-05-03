@@ -27,119 +27,125 @@ jobs:
           npm install javascript-obfuscator html-minifier-terser
           mkdir -p dist
 
-          python3 << 'PYTHON_SCRIPT'
-import re, subprocess
+          python3 << 'EOF'
+          import re, subprocess
 
-with open("raw_index.html", "r", encoding="utf-8") as f:
-    html = f.read()
+          with open('raw_index.html', 'r', encoding='utf-8') as f:
+              html = f.read()
 
-# ═══════════════════════════════════════════════════════
-# Google/AdSense/Analytics - සියලු keywords
-# (මේවා obfuscate කළොත් AdSense policy violation)
-# ═══════════════════════════════════════════════════════
-GOOGLE_KEYWORDS = [
-    "adsbygoogle", "googletag", "google-analytics",
-    "gtag(", "pagead2.googlesyndication", "googletagmanager",
-    "google_ad", "_gaq", "google_tag", "googleadservices",
-    "doubleclick.net", "google-site-verification",
-    "G-", "UA-", "AW-", "google_ad_client", "google_ad_slot",
-    "adService", "googlesyndication", "google_analytics",
-    "GoogleAnalyticsObject", "_ga", "ga(",
-]
+          # ═══════════════════════════════════════════════════════
+          # Google/AdSense/Analytics - සියලු keywords
+          # (මේවා obfuscate කළොත් AdSense policy violation)
+          # ═══════════════════════════════════════════════════════
+          GOOGLE_KEYWORDS = [
+              'adsbygoogle', 'googletag', 'google-analytics',
+              'gtag(', 'pagead2.googlesyndication', 'googletagmanager',
+              'google_ad', '_gaq', 'google_tag', 'googleadservices',
+              'doubleclick.net', 'google-site-verification',
+              'G-', 'UA-', 'AW-', 'google_ad_client', 'google_ad_slot',
+              'adService', 'googlesyndication', 'google_analytics',
+              'GoogleAnalyticsObject', '_ga', 'ga(',
+          ]
 
-SKIP_SRC_PATTERNS = [
-    "pagead2.googlesyndication.com",
-    "googletagmanager.com",
-    "google-analytics.com",
-    "googleadservices.com",
-    "doubleclick.net",
-    "google.com/adsense",
-    "adservice.google",
-]
+          SKIP_SRC_PATTERNS = [
+              'pagead2.googlesyndication.com',
+              'googletagmanager.com',
+              'google-analytics.com',
+              'googleadservices.com',
+              'doubleclick.net',
+              'google.com/adsense',
+              'adservice.google',
+          ]
 
-def is_google_script(tag_attrs, js_body):
-    for pat in SKIP_SRC_PATTERNS:
-        if pat in tag_attrs:
-            return True
-    for kw in GOOGLE_KEYWORDS:
-        if kw in js_body:
-            return True
-    return False
+          def is_google_script(tag_attrs, js_body):
+              for pat in SKIP_SRC_PATTERNS:
+                  if pat in tag_attrs:
+                      return True
+              for kw in GOOGLE_KEYWORDS:
+                  if kw in js_body:
+                      return True
+              return False
 
-def obfuscate_js(js_code):
-    with open("temp_script.js", "w", encoding="utf-8") as f:
-        f.write(js_code)
-    result = subprocess.run([
-        "npx", "javascript-obfuscator", "temp_script.js",
-        "--output", "temp_obf.js",
-        "--compact", "true",
-        "--self-defending", "true",
-        "--string-array", "true",
-        "--string-array-encoding", "rc4",
-        "--string-array-threshold", "1",
-        "--string-array-rotate", "true",
-        "--string-array-shuffle", "true",
-        "--string-array-wrappers-count", "5",
-        "--string-array-wrappers-chained-calls", "true",
-        "--string-array-wrappers-type", "function",
-        "--split-strings", "true",
-        "--split-strings-chunk-length", "4",
-        "--identifier-names-generator", "hexadecimal",
-        "--rename-globals", "false",
-        "--rename-properties", "false",
-        "--control-flow-flattening", "true",
-        "--control-flow-flattening-threshold", "0.9",
-        "--dead-code-injection", "true",
-        "--dead-code-injection-threshold", "0.9",
-        "--numbers-to-expressions", "true",
-        "--simplify", "true",
-        "--transform-object-keys", "true",
-        "--unicode-escape-sequence", "true",
-        "--debug-protection", "true",
-        "--debug-protection-interval", "4000",
-        "--disable-console-output", "true",
-        "--domain-lock", "sinhala-wala-katha.github.io",
-        "--domain-lock-redirect-url", "https://www.google.com",
-    ], capture_output=True, text=True)
-    if result.returncode != 0:
-        print(f"Obfuscator warning: {result.stderr[:300]}")
-        return js_code
-    with open("temp_obf.js", "r", encoding="utf-8") as f:
-        return f.read()
+          def obfuscate_js(js_code):
+              with open('temp_script.js', 'w', encoding='utf-8') as f:
+                  f.write(js_code)
+              result = subprocess.run([
+                  'npx', 'javascript-obfuscator', 'temp_script.js',
+                  '--output', 'temp_obf.js',
+                  # ── Core ──────────────────────────────────────
+                  '--compact', 'true',
+                  '--self-defending', 'true',
+                  # ── String Protection ─────────────────────────
+                  '--string-array', 'true',
+                  '--string-array-encoding', 'rc4',
+                  '--string-array-threshold', '1',
+                  '--string-array-rotate', 'true',
+                  '--string-array-shuffle', 'true',
+                  '--string-array-wrappers-count', '5',
+                  '--string-array-wrappers-chained-calls', 'true',
+                  '--string-array-wrappers-type', 'function',
+                  '--split-strings', 'true',
+                  '--split-strings-chunk-length', '4',
+                  # ── Identifier Protection ─────────────────────
+                  '--identifier-names-generator', 'hexadecimal',
+                  '--rename-globals', 'false',
+                  '--rename-properties', 'false',
+                  # ── Control Flow ──────────────────────────────
+                  '--control-flow-flattening', 'true',
+                  '--control-flow-flattening-threshold', '0.9',
+                  '--dead-code-injection', 'true',
+                  '--dead-code-injection-threshold', '0.9',
+                  # ── Extra ─────────────────────────────────────
+                  '--numbers-to-expressions', 'true',
+                  '--simplify', 'true',
+                  '--transform-object-keys', 'true',
+                  '--unicode-escape-sequence', 'true',
+                  '--debug-protection', 'true',
+                  '--debug-protection-interval', '4000',
+                  '--disable-console-output', 'true',
+                  # ── Domain Lock ───────────────────────────────
+                  '--domain-lock', 'sinhala-wala-katha.github.io',
+                  '--domain-lock-redirect-url', 'https://www.google.com',
+              ], capture_output=True, text=True)
+              if result.returncode != 0:
+                  print(f"Obfuscator warning: {result.stderr[:300]}")
+                  return js_code
+              with open('temp_obf.js', 'r', encoding='utf-8') as f:
+                  return f.read()
 
-def replace_full_script_tag(match):
-    full_tag  = match.group(0)
-    tag_attrs = match.group(1)
-    js_body   = match.group(2)
+          def replace_full_script_tag(match):
+              full_tag  = match.group(0)
+              tag_attrs = match.group(1)
+              js_body   = match.group(2)
 
-    if "src=" in tag_attrs:
-        return full_tag
-    if len(js_body.strip()) < 10:
-        return full_tag
-    if is_google_script(tag_attrs, js_body):
-        print(f"Google script skip කළා")
-        return full_tag
+              if 'src=' in tag_attrs:
+                  return full_tag
+              if len(js_body.strip()) < 10:
+                  return full_tag
+              if is_google_script(tag_attrs, js_body):
+                  print(f"Google script skip කළා")
+                  return full_tag
 
-    print("Obfuscate කරනවා...")
-    obf = obfuscate_js(js_body)
-    return f"<script{tag_attrs}>{obf}</script>"
+              print("Obfuscate කරනවා...")
+              obf = obfuscate_js(js_body)
+              return f'<script{tag_attrs}>{obf}</script>'
 
-result_html = re.sub(
-    r"<script([^>]*)>(.*?)</script>",
-    replace_full_script_tag,
-    html,
-    flags=re.DOTALL | re.IGNORECASE,
-)
+          result_html = re.sub(
+              r'<script([^>]*)>(.*?)</script>',
+              replace_full_script_tag,
+              html,
+              flags=re.DOTALL | re.IGNORECASE,
+          )
 
-# ═══════════════════════════════════════════════════════
-# SEO-SAFE: Crawler වලට HTML content visible ම තිබේ
-# Anti-protection JS user වලට පමණක් apply වේ
-# Googlebot/AdSense bots JS execute නොකරන නිසා
-# ඔවුන්ට HTML content සෑමවිටම visible
-# ═══════════════════════════════════════════════════════
-protection_js = r"""<script>
+          # ═══════════════════════════════════════════════════════
+          # SEO-SAFE: Crawler වලට HTML content visible ම තිබේ
+          # Anti-protection JS user වලට පමණක් apply වේ
+          # Googlebot/AdSense bots JS execute නොකරන නිසා
+          # ඔවුන්ට HTML content සෑමවිටම visible
+          # ═══════════════════════════════════════════════════════
+          protection_js = r"""<script>
 (function(){
-  "use strict";
+  'use strict';
 
   // Bot detection - bots නම් protection skip කිරීම
   var ua = navigator.userAgent.toLowerCase();
@@ -154,27 +160,27 @@ protection_js = r"""<script>
     if(widthDiff > 160 || heightDiff > 160){
       if(!_dtOpen){
         _dtOpen = true;
-        document.body.innerHTML = "";
-        window.location.replace("https://www.google.com");
+        document.body.innerHTML = '';
+        window.location.replace('https://www.google.com');
       }
     } else { _dtOpen = false; }
   }
   setInterval(_checkDevTools, 800);
 
   // 2. Right-click disable
-  document.addEventListener("contextmenu", function(e){
+  document.addEventListener('contextmenu', function(e){
     e.preventDefault(); return false;
   });
 
   // 3. Keyboard shortcuts block
-  document.addEventListener("keydown", function(e){
-    var k = e.key || "";
+  document.addEventListener('keydown', function(e){
+    var k = e.key || '';
     if(
-      k === "F12" ||
-      (e.ctrlKey && e.shiftKey && (k==="I"||k==="J"||k==="C"||k==="K")) ||
-      (e.ctrlKey && (k==="U"||k==="S"||k==="A"||k==="P")) ||
-      (e.metaKey && e.altKey && k==="I") ||
-      (e.metaKey && e.shiftKey && k==="C")
+      k === 'F12' ||
+      (e.ctrlKey && e.shiftKey && (k==='I'||k==='J'||k==='C'||k==='K')) ||
+      (e.ctrlKey && (k==='U'||k==='S'||k==='A'||k==='P')) ||
+      (e.metaKey && e.altKey && k==='I') ||
+      (e.metaKey && e.shiftKey && k==='C')
     ){
       e.preventDefault();
       e.stopImmediatePropagation();
@@ -183,21 +189,21 @@ protection_js = r"""<script>
   }, true);
 
   // 4. Text selection block
-  document.addEventListener("selectstart", function(e){
+  document.addEventListener('selectstart', function(e){
     e.preventDefault(); return false;
   });
-  document.addEventListener("dragstart", function(e){
+  document.addEventListener('dragstart', function(e){
     e.preventDefault(); return false;
   });
   document.onselectstart = function(){ return false; };
   document.onmousedown   = function(e){ if(e.detail > 1) return false; };
 
   // 5. Print block
-  window.addEventListener("beforeprint", function(){
-    document.body.style.visibility = "hidden";
+  window.addEventListener('beforeprint', function(){
+    document.body.style.visibility = 'hidden';
   });
-  window.addEventListener("afterprint", function(){
-    document.body.style.visibility = "visible";
+  window.addEventListener('afterprint', function(){
+    document.body.style.visibility = 'visible';
   });
 
   // 6. iFrame block (Clickjacking protection)
@@ -208,11 +214,11 @@ protection_js = r"""<script>
 })();
 </script>"""
 
-# ═══════════════════════════════════════════════════
-# SEO Critical: robots.txt, sitemap, canonical
-# සියලු search engines වලට visible HTML meta tags
-# ═══════════════════════════════════════════════════
-seo_meta = """
+          # ═══════════════════════════════════════════════════
+          # SEO Critical: robots.txt, sitemap, canonical
+          # සියලු search engines වලට visible HTML meta tags
+          # ═══════════════════════════════════════════════════
+          seo_meta = """
   <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
   <meta name="googlebot" content="index, follow">
   <meta name="bingbot" content="index, follow">
@@ -220,46 +226,46 @@ seo_meta = """
   <meta name="duckduckbot" content="index, follow">
   <link rel="sitemap" type="application/xml" title="Sitemap" href="/sitemap.xml">"""
 
-# CSP - AdSense domains allow කිරීම
-csp_meta = (
-    "\n  <meta http-equiv=\"Content-Security-Policy\" "
-    "content=\"default-src 'self' https: data: blob:; "
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' "
-    "https://pagead2.googlesyndication.com "
-    "https://googletagmanager.com "
-    "https://www.googletagmanager.com "
-    "https://google-analytics.com "
-    "https://www.google-analytics.com "
-    "https://googleadservices.com "
-    "https://adservice.google.com "
-    "https://tpc.googlesyndication.com "
-    "https://www.gstatic.com; "
-    "frame-src https://googleads.g.doubleclick.net "
-    "https://tpc.googlesyndication.com "
-    "https://www.google.com;\">"
-)
+          # CSP - AdSense domains allow කිරීම
+          csp_meta = (
+              '\n  <meta http-equiv="Content-Security-Policy" '
+              "content=\"default-src 'self' https: data: blob:; "
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' "
+              'https://pagead2.googlesyndication.com '
+              'https://googletagmanager.com '
+              'https://www.googletagmanager.com '
+              'https://google-analytics.com '
+              'https://www.google-analytics.com '
+              'https://googleadservices.com '
+              'https://adservice.google.com '
+              'https://tpc.googlesyndication.com '
+              'https://www.gstatic.com; '
+              'frame-src https://googleads.g.doubleclick.net '
+              'https://tpc.googlesyndication.com '
+              'https://www.google.com;">'
+          )
 
-# Meta tags </head> කලින් inject
-if "</head>" in result_html:
-    result_html = result_html.replace(
-        "</head>",
-        seo_meta + csp_meta + "\n</head>",
-        1
-    )
+          # Meta tags </head> කලින් inject
+          if '</head>' in result_html:
+              result_html = result_html.replace(
+                  '</head>',
+                  seo_meta + csp_meta + '\n</head>',
+                  1
+              )
 
-# Protection JS </body> කලින් inject
-if "</body>" in result_html:
-    result_html = result_html.replace(
-        "</body>",
-        protection_js + "\n</body>",
-        1
-    )
+          # Protection JS </body> කලින් inject
+          if '</body>' in result_html:
+              result_html = result_html.replace(
+                  '</body>',
+                  protection_js + '\n</body>',
+                  1
+              )
 
-with open("dist/index.html", "w", encoding="utf-8") as f:
-    f.write(result_html)
+          with open('dist/index.html', 'w', encoding='utf-8') as f:
+              f.write(result_html)
 
-# ── robots.txt (search engines allow, scrapers limit)
-robots_txt = """User-agent: *
+          # ── robots.txt (search engines allow, scrapers limit)
+          robots_txt = """User-agent: *
 Allow: /
 
 User-agent: Mediapartners-Google
@@ -282,11 +288,11 @@ Allow: /
 
 Sitemap: https://sinhala-wala-katha.github.io/sitemap.xml
 """
-with open("dist/robots.txt", "w") as f:
-    f.write(robots_txt)
+          with open('dist/robots.txt', 'w') as f:
+              f.write(robots_txt)
 
-print("Maximum Protection Deploy සාර්ථකයි!")
-PYTHON_SCRIPT
+          print("Maximum Protection Deploy සාර්ථකයි!")
+          EOF
 
       - name: Minify Final HTML
         run: |
