@@ -27,7 +27,7 @@ jobs:
           npm install javascript-obfuscator html-minifier-terser
           mkdir -p dist
 
-          python3 -c '
+          python3 << 'PYTHON_SCRIPT'
 import re, subprocess
 
 with open("raw_index.html", "r", encoding="utf-8") as f:
@@ -223,8 +223,8 @@ seo_meta = """
 # CSP - AdSense domains allow කිරීම
 csp_meta = (
     "\n  <meta http-equiv=\"Content-Security-Policy\" "
-    "content=\"default-src \"self\" https: data: blob:; "
-    "script-src \"self\" \"unsafe-inline\" \"unsafe-eval\" "
+    "content=\"default-src 'self' https: data: blob:; "
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' "
     "https://pagead2.googlesyndication.com "
     "https://googletagmanager.com "
     "https://www.googletagmanager.com "
@@ -286,7 +286,7 @@ with open("dist/robots.txt", "w") as f:
     f.write(robots_txt)
 
 print("Maximum Protection Deploy සාර්ථකයි!")
-'
+PYTHON_SCRIPT
 
       - name: Minify Final HTML
         run: |
