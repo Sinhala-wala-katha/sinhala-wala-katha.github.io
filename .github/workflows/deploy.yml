@@ -17,21 +17,24 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install Obfuscator
-        run: npm install javascript-obfuscator
-
-      - name: Create and Protect Index
+      - name: Process Code and Obfuscate
         run: |
-          # Secret එකෙන් කෝඩ් එක අරගෙන index.html එක හැදීම
+          # 1. Secret එකෙන් කෝඩ් එක අරගෙන raw_index.html එක හැදීම
           echo "${{ secrets.MY_INDEX_HTML }}" > raw_index.html
           
-          # npx පාවිච්චි කරලා Obfuscate කිරීම (මේක තමයි වැදගත්ම වෙනස)
-          npx javascript-obfuscator raw_index.html --output index.html \
+          # 2. Obfuscator එක install කිරීම
+          npm install javascript-obfuscator
+          
+          # 3. පටලවපු කෝඩ් එක සහිත index.html එක හැදීම
+          ./node_modules/.bin/javascript-obfuscator raw_index.html --output index.html \
             --compact true \
             --self-defending true \
             --string-array true \
             --string-array-encoding 'base64' \
             --domain-lock 'sinhala-wala-katha.github.io'
+          
+          # 4. වැඩකට නැති raw ෆයිල් එක මකා දැමීම
+          rm raw_index.html
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
