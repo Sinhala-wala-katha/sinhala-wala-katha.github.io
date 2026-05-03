@@ -1,0 +1,22 @@
+User-agent: *
+Allow: /
+
+User-agent: Mediapartners-Google
+Allow: /
+
+User-agent: AdsBot-Google
+Allow: /
+
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: DuckDuckBot
+Allow: /
+
+User-agent: Slurp
+Allow: /
+
+Sitemap: https://sinhala-wala-katha.github.io/sitemap.xml
