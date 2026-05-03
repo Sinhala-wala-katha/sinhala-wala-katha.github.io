@@ -23,17 +23,12 @@ jobs:
         env:
           MY_RAW_CODE: ${{ secrets.MY_INDEX_HTML }}
         run: |
-          # Secret එකෙන් HTML ගැනීම
           echo "$MY_RAW_CODE" > raw_index.html
-          
           npm install javascript-obfuscator
-          
-          # HTML එකෙන් <script> කොටස් වෙන් කිරීම
           mkdir -p dist
-          
-          # Python script එකෙන් JS කොටස extract කර obfuscate කිරීම
+
           python3 << 'EOF'
-          import re, subprocess, os
+          import re, subprocess
 
           with open('raw_index.html', 'r', encoding='utf-8') as f:
               html = f.read()
@@ -46,8 +41,26 @@ jobs:
                   '--output', 'temp_obf.js',
                   '--compact', 'true',
                   '--self-defending', 'true',
+                  '--debug-protection', 'true',
+                  '--debug-protection-interval', '4000',
+                  '--disable-console-output', 'true',
                   '--string-array', 'true',
-                  '--string-array-encoding', 'base64',
+                  '--string-array-encoding', 'rc4',
+                  '--string-array-threshold', '1',
+                  '--string-array-rotate', 'true',
+                  '--string-array-shuffle', 'true',
+                  '--split-strings', 'true',
+                  '--split-strings-chunk-length', '5',
+                  '--identifier-names-generator', 'hexadecimal',
+                  '--rename-globals', 'true',
+                  '--control-flow-flattening', 'true',
+                  '--control-flow-flattening-threshold', '1',
+                  '--dead-code-injection', 'true',
+                  '--dead-code-injection-threshold', '1',
+                  '--numbers-to-expressions', 'true',
+                  '--simplify', 'true',
+                  '--transform-object-keys', 'true',
+                  '--unicode-escape-sequence', 'true',
                   '--domain-lock', 'sinhala-wala-katha.github.io'
               ], check=True)
               with open('temp_obf.js', 'r', encoding='utf-8') as f:
@@ -55,9 +68,33 @@ jobs:
 
           def replace_script(match):
               js = match.group(1)
+
+              # Google scripts skip කිරීම - AdSense/Analytics ආරක්ෂාව
+              google_keywords = [
+                  'adsbygoogle',
+                  'googletag',
+                  'google-analytics',
+                  'gtag(',
+                  'pagead2.googlesyndication',
+                  'googletagmanager',
+                  'google_ad',
+                  '_gaq'
+              ]
+
+              for keyword in google_keywords:
+                  if keyword in js:
+                      print(f"⏭️ Skip කළා (Google script): {keyword}")
+                      return match.group(0)
+
+              # හිස් scripts skip කිරීම
+              if len(js.strip()) < 10:
+                  return match.group(0)
+
+              print("🔒 Obfuscate කරනවා...")
               obf = obfuscate_js(js)
               return f'<script>{obf}</script>'
 
+          # Script tags obfuscate කිරීම
           result = re.sub(
               r'<script>(.*?)</script>',
               replace_script,
@@ -65,10 +102,40 @@ jobs:
               flags=re.DOTALL
           )
 
+          # DevTools විවෘත කිරීම වළකන layer එක එකතු කිරීම
+          devtools_block = """
+          <script>
+          (function(){
+            var threshold = 160;
+            setInterval(function(){
+              if(window.outerWidth - window.innerWidth > threshold ||
+                 window.outerHeight - window.innerHeight > threshold){
+                document.body.innerHTML = '';
+                window.location.reload();
+              }
+            }, 1000);
+            document.addEventListener('contextmenu', function(e){
+              e.preventDefault();
+            });
+            document.addEventListener('keydown', function(e){
+              if(e.key === 'F12' ||
+                (e.ctrlKey && e.shiftKey && e.key === 'I') ||
+                (e.ctrlKey && e.shiftKey && e.key === 'J') ||
+                (e.ctrlKey && e.key === 'U')){
+                e.preventDefault();
+              }
+            });
+          })();
+          </script>
+          """
+
+          # DevTools block </body> tag එකට කලින් එකතු කිරීම
+          result = result.replace('</body>', devtools_block + '</body>')
+
           with open('dist/index.html', 'w', encoding='utf-8') as f:
               f.write(result)
 
-          print("✅ Obfuscation සාර්ථකයි!")
+          print("✅ Maximum Protection සාර්ථකයි!")
           EOF
 
       - name: Deploy to GitHub Pages
