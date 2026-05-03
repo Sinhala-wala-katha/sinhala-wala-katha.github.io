@@ -27,7 +27,7 @@ jobs:
           npm install javascript-obfuscator html-minifier-terser
           mkdir -p dist
 
-          python3 << 'EOF'
+          python3 << EOF
           import re, subprocess
 
           with open('raw_index.html', 'r', encoding='utf-8') as f:
@@ -143,16 +143,14 @@ jobs:
           # Googlebot/AdSense bots JS execute නොකරන නිසා
           # ඔවුන්ට HTML content සෑමවිටම visible
           # ═══════════════════════════════════════════════════════
-          protection_js = r"""<script>
+          protection_js = """<script>
 (function(){
   'use strict';
 
-  // Bot detection - bots නම් protection skip කිරීම
   var ua = navigator.userAgent.toLowerCase();
   var isBot = /bot|crawl|spider|mediapartners|adsbot|googlebot|bingbot|slurp|duckduck|baidu|yandex|sogou|exabot|facebot|ia_archiver/.test(ua);
   if(isBot) return;
 
-  // 1. DevTools detection (size-based)
   var _dtOpen = false;
   function _checkDevTools(){
     var widthDiff  = window.outerWidth  - window.innerWidth;
@@ -167,12 +165,10 @@ jobs:
   }
   setInterval(_checkDevTools, 800);
 
-  // 2. Right-click disable
   document.addEventListener('contextmenu', function(e){
     e.preventDefault(); return false;
   });
 
-  // 3. Keyboard shortcuts block
   document.addEventListener('keydown', function(e){
     var k = e.key || '';
     if(
@@ -188,7 +184,6 @@ jobs:
     }
   }, true);
 
-  // 4. Text selection block
   document.addEventListener('selectstart', function(e){
     e.preventDefault(); return false;
   });
@@ -198,7 +193,6 @@ jobs:
   document.onselectstart = function(){ return false; };
   document.onmousedown   = function(e){ if(e.detail > 1) return false; };
 
-  // 5. Print block
   window.addEventListener('beforeprint', function(){
     document.body.style.visibility = 'hidden';
   });
@@ -206,7 +200,6 @@ jobs:
     document.body.style.visibility = 'visible';
   });
 
-  // 6. iFrame block (Clickjacking protection)
   if(window.self !== window.top){
     window.top.location = window.self.location;
   }
@@ -226,26 +219,24 @@ jobs:
   <meta name="duckduckbot" content="index, follow">
   <link rel="sitemap" type="application/xml" title="Sitemap" href="/sitemap.xml">"""
 
-          # CSP - AdSense domains allow කිරීම
           csp_meta = (
-              '\n  <meta http-equiv="Content-Security-Policy" '
+              "\n  <meta http-equiv=\"Content-Security-Policy\" "
               "content=\"default-src 'self' https: data: blob:; "
               "script-src 'self' 'unsafe-inline' 'unsafe-eval' "
-              'https://pagead2.googlesyndication.com '
-              'https://googletagmanager.com '
-              'https://www.googletagmanager.com '
-              'https://google-analytics.com '
-              'https://www.google-analytics.com '
-              'https://googleadservices.com '
-              'https://adservice.google.com '
-              'https://tpc.googlesyndication.com '
-              'https://www.gstatic.com; '
-              'frame-src https://googleads.g.doubleclick.net '
-              'https://tpc.googlesyndication.com '
-              'https://www.google.com;">'
+              "https://pagead2.googlesyndication.com "
+              "https://googletagmanager.com "
+              "https://www.googletagmanager.com "
+              "https://google-analytics.com "
+              "https://www.google-analytics.com "
+              "https://googleadservices.com "
+              "https://adservice.google.com "
+              "https://tpc.googlesyndication.com "
+              "https://www.gstatic.com; "
+              "frame-src https://googleads.g.doubleclick.net "
+              "https://tpc.googlesyndication.com "
+              "https://www.google.com;\">"
           )
 
-          # Meta tags </head> කලින් inject
           if '</head>' in result_html:
               result_html = result_html.replace(
                   '</head>',
@@ -253,7 +244,6 @@ jobs:
                   1
               )
 
-          # Protection JS </body> කලින් inject
           if '</body>' in result_html:
               result_html = result_html.replace(
                   '</body>',
@@ -264,7 +254,6 @@ jobs:
           with open('dist/index.html', 'w', encoding='utf-8') as f:
               f.write(result_html)
 
-          # ── robots.txt (search engines allow, scrapers limit)
           robots_txt = """User-agent: *
 Allow: /
 
