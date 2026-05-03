@@ -18,16 +18,15 @@ jobs:
           node-version: '20'
 
       - name: Install Obfuscator
-        run: npm install -g javascript-obfuscator
+        run: npm install javascript-obfuscator
 
       - name: Create and Protect Index
         run: |
-          # 1. Secret එකෙන් කෝඩ් එක අරගෙන index.html එක හැදීම
-          echo "${{ secrets.MY_INDEX_HTML }}" > index.html
+          # Secret එකෙන් කෝඩ් එක අරගෙන index.html එක හැදීම
+          echo "${{ secrets.MY_INDEX_HTML }}" > raw_index.html
           
-          # 2. JavaScript විතරක් පටලවනවා (AdSense සහ SEO බේරගන්න)
-          # මෙතනදී HTML content එක obfuscate වෙන්නේ නැහැ, script එක විතරයි වෙන්නේ.
-          javascript-obfuscator index.html --output index.html \
+          # npx පාවිච්චි කරලා Obfuscate කිරීම (මේක තමයි වැදගත්ම වෙනස)
+          npx javascript-obfuscator raw_index.html --output index.html \
             --compact true \
             --self-defending true \
             --string-array true \
