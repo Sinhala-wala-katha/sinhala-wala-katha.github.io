@@ -23,24 +23,58 @@ jobs:
         env:
           MY_RAW_CODE: ${{ secrets.MY_INDEX_HTML }}
         run: |
-          # 1. Secret එකේ තියෙන දේවල් ආරක්ෂිතව ගොනුවකට ගැනීම
+          # Secret එකෙන් HTML ගැනීම
           echo "$MY_RAW_CODE" > raw_index.html
           
-          # 2. Obfuscator එක install කර පවත්වාගෙන යාම
           npm install javascript-obfuscator
           
-          # 3. පටලැවීම සිදු කිරීම (Domain Lock සහ SEO Safe settings සමඟ)
-          npx javascript-obfuscator raw_index.html --output index.html \
-            --compact true \
-            --self-defending true \
-            --string-array true \
-            --string-array-encoding 'base64' \
-            --domain-lock 'sinhala-wala-katha.github.io'
+          # HTML එකෙන් <script> කොටස් වෙන් කිරීම
+          mkdir -p dist
+          
+          # Python script එකෙන් JS කොටස extract කර obfuscate කිරීම
+          python3 << 'EOF'
+          import re, subprocess, os
+
+          with open('raw_index.html', 'r', encoding='utf-8') as f:
+              html = f.read()
+
+          def obfuscate_js(js_code):
+              with open('temp_script.js', 'w', encoding='utf-8') as f:
+                  f.write(js_code)
+              subprocess.run([
+                  'npx', 'javascript-obfuscator', 'temp_script.js',
+                  '--output', 'temp_obf.js',
+                  '--compact', 'true',
+                  '--self-defending', 'true',
+                  '--string-array', 'true',
+                  '--string-array-encoding', 'base64',
+                  '--domain-lock', 'sinhala-wala-katha.github.io'
+              ], check=True)
+              with open('temp_obf.js', 'r', encoding='utf-8') as f:
+                  return f.read()
+
+          def replace_script(match):
+              js = match.group(1)
+              obf = obfuscate_js(js)
+              return f'<script>{obf}</script>'
+
+          result = re.sub(
+              r'<script>(.*?)</script>',
+              replace_script,
+              html,
+              flags=re.DOTALL
+          )
+
+          with open('dist/index.html', 'w', encoding='utf-8') as f:
+              f.write(result)
+
+          print("✅ Obfuscation සාර්ථකයි!")
+          EOF
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: .
+          publish_dir: ./dist
           publish_branch: gh-pages
           force_orphan: true
