@@ -72,52 +72,32 @@ jobs:
 
           PAGE_CONTENT=$(curl -sL --max-time 30 --retry 3 \
             -A "Mozilla/5.0 (compatible; Googlebot/2.1)" \
-            "$URL")
-          CURL_EXIT=$?
-          if [ $CURL_EXIT -ne 0 ] || [ -z "$PAGE_CONTENT" ]; then
-            echo "⚠️ Site fetch failed or empty, using defaults"
-            PAGE_CONTENT=""
-          fi
+            "$URL" || echo "")
 
-          TITLE=""
-          if [ -n "$PAGE_CONTENT" ]; then
-            TITLE=$(echo "$PAGE_CONTENT" | grep -oP '(?<=<title>)[^<]*' | head -1 | xargs 2>/dev/null)
-          fi
-
-          DESC=""
-          if [ -n "$PAGE_CONTENT" ]; then
-            DESC=$(echo "$PAGE_CONTENT" | grep -oP '(?<=<meta name="description" content=")[^"]*' | head -1 | xargs 2>/dev/null)
-          fi
-
-          KEYWORDS=""
-          if [ -n "$PAGE_CONTENT" ]; then
-            KEYWORDS=$(echo "$PAGE_CONTENT" | grep -oP '(?<=<meta name="keywords" content=")[^"]*' | head -1 | xargs 2>/dev/null)
-          fi
-
-          CANONICAL=""
-          if [ -n "$PAGE_CONTENT" ]; then
-            CANONICAL=$(echo "$PAGE_CONTENT" | grep -oP '(?<=<link rel="canonical" href=")[^"]*' | head -1 | xargs 2>/dev/null)
-          fi
+          TITLE=$(echo "$PAGE_CONTENT" | grep -oP '(?<=<title>)[^<]*' | head -1 | tr -d '\n\r%"' | xargs 2>/dev/null || echo "")
+          DESC=$(echo "$PAGE_CONTENT" | grep -oP '(?<=<meta name="description" content=")[^"]*' | head -1 | tr -d '\n\r%"' | xargs 2>/dev/null || echo "")
+          KEYWORDS=$(echo "$PAGE_CONTENT" | grep -oP '(?<=<meta name="keywords" content=")[^"]*' | head -1 | tr -d '\n\r%"' | xargs 2>/dev/null || echo "")
+          CANONICAL=$(echo "$PAGE_CONTENT" | grep -oP '(?<=<link rel="canonical" href=")[^"]*' | head -1 | tr -d '\n\r%"' | xargs 2>/dev/null || echo "")
 
           [ -z "$TITLE" ]     && TITLE="Sinhala Wala Katha"
           [ -z "$DESC" ]      && DESC="Best Sinhala Stories"
           [ -z "$KEYWORDS" ]  && KEYWORDS="sinhala stories"
           [ -z "$CANONICAL" ] && CANONICAL="$URL"
 
-          TITLE=$(echo "$TITLE"         | tr -d '\n\r%')
-          DESC=$(echo "$DESC"           | tr -d '\n\r%')
-          KEYWORDS=$(echo "$KEYWORDS"   | tr -d '\n\r%')
-          CANONICAL=$(echo "$CANONICAL" | tr -d '\n\r%')
-
+          # ✅ FIX: Number values සඳහා safe extraction
           LINK_COUNT=0
           if [ -n "$PAGE_CONTENT" ]; then
-            LINK_COUNT=$(echo "$PAGE_CONTENT" | grep -c 'href=' || echo "0")
+            LINK_COUNT=$(echo "$PAGE_CONTENT" | grep -c 'href=' 2>/dev/null || echo "0")
+            LINK_COUNT=$(echo "$LINK_COUNT" | tr -d '[:space:]')
+            [[ "$LINK_COUNT" =~ ^[0-9]+$ ]] || LINK_COUNT=0
           fi
 
-          SITEMAP=$(curl -sL --max-time 15 "${URL}sitemap.xml" || echo "")
+          SITEMAP=$(curl -sL --max-time 15 "${URL}sitemap.xml" 2>/dev/null || echo "")
           POST_COUNT=0
           if [ -n "$SITEMAP" ]; then
-            POST_COUNT=$(echo "$SITEMAP" | grep -c '<loc>' || echo "0")
+            POST_COUNT=$(echo "$SITEMAP" | grep -c '<loc>' 2>/dev/null || echo "0")
+            POST_COUNT=$(echo "$POST_COUNT" | tr -d '[:space:]')
+            [[ "$POST_COUNT" =~ ^[0-9]+$ ]] || POST_COUNT=0
           fi
 
           CURRENT_DATE=$(date +'%Y-%m-%d')
@@ -125,13 +105,15 @@ jobs:
           YEAR=$(date +'%Y')
           TIMESTAMP=$(date +'%Y-%m-%d %H:%M UTC')
 
-          echo "link_count=${LINK_COUNT}"  >> "$GITHUB_OUTPUT"
-          echo "post_count=${POST_COUNT}"  >> "$GITHUB_OUTPUT"
-          echo "today=${CURRENT_DATE}"     >> "$GITHUB_OUTPUT"
-          echo "week=${WEEK_NUM}"          >> "$GITHUB_OUTPUT"
-          echo "year=${YEAR}"              >> "$GITHUB_OUTPUT"
-          echo "canonical=${CANONICAL}"    >> "$GITHUB_OUTPUT"
+          # ✅ FIX: Numbers directly output කිරීම (heredoc නොව)
+          echo "link_count=${LINK_COUNT}" >> "$GITHUB_OUTPUT"
+          echo "post_count=${POST_COUNT}" >> "$GITHUB_OUTPUT"
+          echo "today=${CURRENT_DATE}"    >> "$GITHUB_OUTPUT"
+          echo "week=${WEEK_NUM}"         >> "$GITHUB_OUTPUT"
+          echo "year=${YEAR}"             >> "$GITHUB_OUTPUT"
+          echo "canonical=${CANONICAL}"   >> "$GITHUB_OUTPUT"
 
+          # ✅ FIX: Text values සඳහා heredoc (special chars ආරක්ෂාවට)
           {
             echo "site_title<<SEOEOF_TITLE"
             echo "${TITLE}"
@@ -157,52 +139,47 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
           echo "✅ Title='${TITLE}' | Links=${LINK_COUNT} | Posts=${POST_COUNT}"
-          exit 0
 
-      # ✅ FIX: daily_date සහ weekly_full ද should_run=true වෙනවා
-      # කලින් version හිදී schedule mode හිදී post count change නැතිනම්
-      # should_run=false වී issue title update නොවූ bug එක fix කළා
       - name: 🆕 Detect Content Change (Cache)
         id: new_content
         shell: bash {0}
         run: |
           MODE="${{ steps.run_mode.outputs.mode }}"
-          CURRENT_COUNT="${{ steps.seo_data.outputs.post_count }}"
           CACHE_FILE="${{ env.CACHE_FILE }}"
           FORCE="${{ github.event.inputs.force_new_issue }}"
+
+          # ✅ FIX: post_count safely read කිරීම
+          CURRENT_COUNT="${{ steps.seo_data.outputs.post_count }}"
+          CURRENT_COUNT=$(echo "$CURRENT_COUNT" | tr -d '[:space:]')
+          [[ "$CURRENT_COUNT" =~ ^[0-9]+$ ]] || CURRENT_COUNT=0
 
           mkdir -p .github
 
           PREV_COUNT=0
           if [ -f "$CACHE_FILE" ]; then
             PREV_COUNT=$(cat "$CACHE_FILE" | tr -d '[:space:]')
-            [ -z "$PREV_COUNT" ] && PREV_COUNT=0
+            [[ "$PREV_COUNT" =~ ^[0-9]+$ ]] || PREV_COUNT=0
           fi
 
           echo "📈 Previous: ${PREV_COUNT} | Current: ${CURRENT_COUNT}"
 
-          CURRENT_NUM="${CURRENT_COUNT:-0}"
-          PREV_NUM="${PREV_COUNT:-0}"
-
-          # ✅ KEY FIX: daily_date + weekly_full ද සෑම විටම should_run=true
           if [ "$MODE" = "push_check" ] || \
              [ "$MODE" = "manual" ] || \
              [ "$MODE" = "daily_date" ] || \
              [ "$MODE" = "weekly_full" ] || \
              [ "$FORCE" = "true" ] || \
-             [ "$CURRENT_NUM" -gt "$PREV_NUM" ]; then
-            echo "should_run=true"   >> "$GITHUB_OUTPUT"
-            DIFF=$(( CURRENT_NUM - PREV_NUM ))
+             [ "$CURRENT_COUNT" -gt "$PREV_COUNT" ]; then
+            echo "should_run=true" >> "$GITHUB_OUTPUT"
+            DIFF=$(( CURRENT_COUNT - PREV_COUNT ))
             echo "post_diff=${DIFF}" >> "$GITHUB_OUTPUT"
-            echo "✅ Will create/update issue. Mode=${MODE}"
+            echo "✅ Will run. Mode=${MODE}"
           else
-            echo "should_run=false"  >> "$GITHUB_OUTPUT"
-            echo "post_diff=0"       >> "$GITHUB_OUTPUT"
-            echo "ℹ️ No change detected, skipping."
+            echo "should_run=false" >> "$GITHUB_OUTPUT"
+            echo "post_diff=0"      >> "$GITHUB_OUTPUT"
+            echo "ℹ️ No change, skipping."
           fi
 
           echo "${CURRENT_COUNT}" > "$CACHE_FILE"
-          exit 0
 
       - name: 💾 Commit Cache Update
         if: steps.new_content.outputs.should_run == 'true'
@@ -217,7 +194,6 @@ jobs:
             git commit -m "🤖 chore: update seo cache [posts=${{ steps.seo_data.outputs.post_count }}] - ${{ steps.seo_data.outputs.today }}"
             git push
           fi
-          exit 0
 
       - name: 🔗 Scan Links (curl-based)
         id: link_scan
@@ -263,7 +239,7 @@ jobs:
               OK=$(( OK + 1 ))
             else
               BROKEN=$(( BROKEN + 1 ))
-              BROKEN_LIST="${BROKEN_LIST}- ❌ [${STATUS}] ${LINK}\n"
+              BROKEN_LIST="${BROKEN_LIST}- [${STATUS}] ${LINK}\n"
             fi
           done <<< "$LINKS"
 
@@ -272,24 +248,28 @@ jobs:
             echo ""
             echo "| Metric | Count |"
             echo "|--------|-------|"
-            echo "| ✅ OK Links      | ${OK} |"
-            echo "| ❌ Broken Links  | ${BROKEN} |"
-            echo "| 🔢 Total Scanned | ${TOTAL} |"
+            echo "| OK Links      | ${OK} |"
+            echo "| Broken Links  | ${BROKEN} |"
+            echo "| Total Scanned | ${TOTAL} |"
             echo ""
             if [ "$BROKEN" -gt 0 ]; then
-              echo "### ❌ Broken Links:"
+              echo "### Broken Links:"
               echo ""
               printf "%b" "$BROKEN_LIST"
             else
-              echo "### ✅ All links healthy!"
+              echo "### All links healthy!"
             fi
           } > ./lychee/out.md
+
+          # ✅ FIX: Numbers validate කර output කිරීම
+          [[ "$OK"     =~ ^[0-9]+$ ]] || OK=0
+          [[ "$BROKEN" =~ ^[0-9]+$ ]] || BROKEN=0
+          [[ "$TOTAL"  =~ ^[0-9]+$ ]] || TOTAL=0
 
           echo "ok=${OK}"         >> "$GITHUB_OUTPUT"
           echo "broken=${BROKEN}" >> "$GITHUB_OUTPUT"
           echo "total=${TOTAL}"   >> "$GITHUB_OUTPUT"
           echo "✅ Scan done — OK:${OK} | Broken:${BROKEN} | Total:${TOTAL}"
-          exit 0
 
       - name: 📝 Generate Full SEO Report
         if: steps.new_content.outputs.should_run == 'true'
@@ -316,50 +296,47 @@ jobs:
           KEYWORDS="${SITE_KEYWORDS:-sinhala stories}"
 
           if [ "$MODE" = "push_check" ]; then
-            TRIGGER_BADGE="🆕 Push — Content Updated"
+            TRIGGER_BADGE="Push — Content Updated"
           elif [ "$MODE" = "weekly_full" ]; then
-            TRIGGER_BADGE="🔄 Weekly Scheduled Update"
+            TRIGGER_BADGE="Weekly Scheduled Update"
           elif [ "$MODE" = "daily_date" ]; then
-            TRIGGER_BADGE="📅 Daily Scheduled Check"
+            TRIGGER_BADGE="Daily Scheduled Check"
           else
-            TRIGGER_BADGE="🛠️ Manual Dispatch"
+            TRIGGER_BADGE="Manual Dispatch"
           fi
 
           {
-            printf '# 🌐 [%s](%s)\n' "$TITLE" "$CANONICAL"
-            printf '### 🆘 SEO Health Report — Week %s (%s)\n\n' "$WEEK" "$TODAY"
+            printf '# [%s](%s)\n' "$TITLE" "$CANONICAL"
+            printf '### SEO Health Report — Week %s (%s)\n\n' "$WEEK" "$TODAY"
             printf '> **Trigger:** %s\n' "$TRIGGER_BADGE"
             printf '> **Site Type:** %s\n' "$SITE_TYPE"
             printf '> **Last Verified:** %s\n\n' "$TIMESTAMP"
             printf '---\n\n'
-            printf '## 📊 Live SEO Metrics\n\n'
+            printf '## Live SEO Metrics\n\n'
             printf '| Metric | Value |\n'
             printf '|--------|-------|\n'
-            printf '| 📝 Page Title | %s |\n'                   "$TITLE"
-            printf '| 📄 Meta Description | %s |\n'             "$DESC"
-            printf '| 🔑 Keywords | %s |\n'                     "$KEYWORDS"
-            printf '| 🔗 Total Live Links | %s |\n'             "$LINKS"
-            printf '| 📰 Sitemap Pages | %s |\n'                "$POSTS"
-            printf '| 🏗️ Site Platform | %s |\n'                 "$SITE_TYPE"
-            printf '| 🔗 Canonical URL | [View Site](%s) |\n\n' "$CANONICAL"
+            printf '| Page Title | %s |\n'        "$TITLE"
+            printf '| Meta Description | %s |\n'  "$DESC"
+            printf '| Keywords | %s |\n'           "$KEYWORDS"
+            printf '| Total Live Links | %s |\n'  "$LINKS"
+            printf '| Sitemap Pages | %s |\n'      "$POSTS"
+            printf '| Site Platform | %s |\n'      "$SITE_TYPE"
+            printf '| Canonical URL | [View](%s) |\n\n' "$CANONICAL"
             printf '---\n\n'
-            printf '## 🛠️ Technical Health Audit\n\n'
-            printf '> Auto-maintained to keep **[%s](%s)** at maximum Google ranking.\n' "$TITLE" "$CANONICAL"
-            printf '> Updated on every push and refreshed weekly.\n'
-            printf '> 🔗 **Visit:** [%s](%s)\n\n' "$CANONICAL" "$CANONICAL"
-            printf '### 📋 Link Crawl Report:\n\n'
+            printf '## Technical Health Audit\n\n'
+            printf '> Auto-maintained for **[%s](%s)**\n\n' "$TITLE" "$CANONICAL"
+            printf '### Link Crawl Report:\n\n'
           } > report.md
 
           cat ./lychee/out.md >> report.md
 
           {
             printf '\n---\n\n'
-            printf '© %s [%s](%s) | Auto-generated by SEO Monitor | Week %s (%s)\n' \
+            printf '(c) %s [%s](%s) | Auto-generated by SEO Monitor | Week %s (%s)\n' \
               "$YEAR" "$TITLE" "$CANONICAL" "$WEEK" "$TODAY"
           } >> report.md
 
           echo "✅ Report generated — $(wc -l < report.md) lines"
-          exit 0
 
       - name: 🏷️ Ensure GitHub Labels Exist
         if: steps.new_content.outputs.should_run == 'true'
@@ -373,7 +350,6 @@ jobs:
               --description "Auto-managed by SEO Monitor" \
               2>/dev/null || true
           done
-          exit 0
 
       - name: 🔎 Find Existing SEO Issue
         id: find_issue
@@ -383,7 +359,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           ISSUE_NUMBER=$(gh issue list \
-            --search "🆘 SEO Health Report in:title" \
+            --search "SEO Health Report in:title" \
             --state open \
             --json number,title \
             --jq 'if length > 0 then .[0].number | tostring else "" end' \
@@ -397,7 +373,6 @@ jobs:
             echo "found=false" >> "$GITHUB_OUTPUT"
             echo "ℹ️ No existing issue — will create new."
           fi
-          exit 0
 
       - name: 🆕 Create or Update SEO Issue
         if: steps.new_content.outputs.should_run == 'true'
@@ -410,7 +385,7 @@ jobs:
           TODAY="${{ steps.seo_data.outputs.today }}"
           WEEK="${{ steps.seo_data.outputs.week }}"
           TITLE="${SITE_TITLE:-Sinhala Wala Katha}"
-          ISSUE_TITLE="🆘 SEO Health Report: ${TITLE} - Week ${WEEK} (${TODAY})"
+          ISSUE_TITLE="SEO Health Report: ${TITLE} - Week ${WEEK} (${TODAY})"
 
           if [ -n "$ISSUE_NUMBER" ]; then
             gh issue edit "$ISSUE_NUMBER" \
@@ -424,12 +399,7 @@ jobs:
               --label "seo-monitor,automated,link-health"
             echo "✅ New issue created."
           fi
-          exit 0
 
-      # ✅ NOTE: daily_date step තවදුරටත් අවශ්‍ය නෑ —
-      # should_run=true fix නිසා "Create or Update" step ම
-      # daily_date හිදීත් title + body update කරනවා
-      # නමුත් backward compat සඳහා රැඳෙනවා (should_run check add කළා)
       - name: 📅 Daily Title Date Update
         if: |
           steps.run_mode.outputs.mode == 'daily_date' &&
@@ -442,10 +412,10 @@ jobs:
           TODAY="${{ steps.seo_data.outputs.today }}"
           WEEK="${{ steps.seo_data.outputs.week }}"
           TITLE="${SITE_TITLE:-Sinhala Wala Katha}"
-          NEW_TITLE="🆘 SEO Health Report: ${TITLE} - Week ${WEEK} (${TODAY})"
+          NEW_TITLE="SEO Health Report: ${TITLE} - Week ${WEEK} (${TODAY})"
 
           ISSUE_NUMBER=$(gh issue list \
-            --search "🆘 SEO Health Report in:title" \
+            --search "SEO Health Report in:title" \
             --state open \
             --json number \
             --jq 'if length > 0 then .[0].number | tostring else "" end' \
@@ -457,7 +427,6 @@ jobs:
           else
             echo "ℹ️ No open issue found."
           fi
-          exit 0
 
       - name: 📋 Workflow Summary
         if: always()
@@ -471,7 +440,7 @@ jobs:
           OK="${{ steps.link_scan.outputs.ok }}"
           BROKEN="${{ steps.link_scan.outputs.broken }}"
           {
-            echo "## 🚀 SEO Monitor Summary"
+            echo "## SEO Monitor Summary"
             echo ""
             echo "| Field | Value |"
             echo "|-------|-------|"
@@ -480,8 +449,7 @@ jobs:
             echo "| Live Links      | ${LINKS:-N/A} |"
             echo "| Sitemap Posts   | ${POSTS:-N/A} |"
             echo "| Issue Updated   | ${RAN:-N/A} |"
-            echo "| ✅ OK Links     | ${OK:-N/A} |"
-            echo "| ❌ Broken Links | ${BROKEN:-N/A} |"
+            echo "| OK Links        | ${OK:-N/A} |"
+            echo "| Broken Links    | ${BROKEN:-N/A} |"
             echo "| Site Type       | ${{ steps.site_type.outputs.label }} |"
           } >> "$GITHUB_STEP_SUMMARY"
-          exit 0
