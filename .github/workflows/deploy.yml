@@ -24,19 +24,46 @@ jobs:
           MY_RAW_CODE: ${{ secrets.MY_INDEX_HTML }}
         run: |
           echo "$MY_RAW_CODE" > raw_index.html
-          npm install javascript-obfuscator
+          npm install javascript-obfuscator terser html-minifier-terser
           mkdir -p dist
 
           python3 << 'EOF'
-          import re, subprocess
+          import re, subprocess, sys
 
           with open('raw_index.html', 'r', encoding='utf-8') as f:
               html = f.read()
 
+          # ── Google/AdSense keywords ──────────────────────────────────────
+          GOOGLE_KEYWORDS = [
+              'adsbygoogle', 'googletag', 'google-analytics',
+              'gtag(', 'pagead2.googlesyndication', 'googletagmanager',
+              'google_ad', '_gaq', 'google_tag', 'googleadservices',
+              'doubleclick.net', 'google-site-verification',
+              'G-', 'UA-', 'AW-',
+          ]
+
+          # ── External src= scripts skip (AdSense async tags) ─────────────
+          SKIP_SRC_PATTERNS = [
+              'pagead2.googlesyndication.com',
+              'googletagmanager.com',
+              'google-analytics.com',
+              'googleadservices.com',
+              'doubleclick.net',
+          ]
+
+          def is_google_script(tag_attrs, js_body):
+              for pat in SKIP_SRC_PATTERNS:
+                  if pat in tag_attrs:
+                      return True
+              for kw in GOOGLE_KEYWORDS:
+                  if kw in js_body:
+                      return True
+              return False
+
           def obfuscate_js(js_code):
               with open('temp_script.js', 'w', encoding='utf-8') as f:
                   f.write(js_code)
-              subprocess.run([
+              result = subprocess.run([
                   'npx', 'javascript-obfuscator', 'temp_script.js',
                   '--output', 'temp_obf.js',
                   '--compact', 'true',
@@ -50,93 +77,154 @@ jobs:
                   '--string-array-rotate', 'true',
                   '--string-array-shuffle', 'true',
                   '--split-strings', 'true',
-                  '--split-strings-chunk-length', '5',
+                  '--split-strings-chunk-length', '4',
                   '--identifier-names-generator', 'hexadecimal',
-                  '--rename-globals', 'true',
+                  '--rename-globals', 'false',
                   '--control-flow-flattening', 'true',
-                  '--control-flow-flattening-threshold', '1',
+                  '--control-flow-flattening-threshold', '0.9',
                   '--dead-code-injection', 'true',
-                  '--dead-code-injection-threshold', '1',
+                  '--dead-code-injection-threshold', '0.9',
                   '--numbers-to-expressions', 'true',
                   '--simplify', 'true',
                   '--transform-object-keys', 'true',
                   '--unicode-escape-sequence', 'true',
-                  '--domain-lock', 'sinhala-wala-katha.github.io'
-              ], check=True)
+                  '--domain-lock', 'sinhala-wala-katha.github.io',
+                  '--domain-lock-redirect-url', 'https://www.google.com',
+              ], capture_output=True, text=True)
+              if result.returncode != 0:
+                  print(f"⚠️ Obfuscator error: {result.stderr[:200]}")
+                  return js_code
               with open('temp_obf.js', 'r', encoding='utf-8') as f:
                   return f.read()
 
-          def replace_script(match):
-              js = match.group(1)
+          # ── Full <script ...> tag handler (src= tags ද handle කරයි) ─────
+          def replace_full_script_tag(match):
+              full_tag   = match.group(0)
+              tag_attrs  = match.group(1)   # opening tag attributes
+              js_body    = match.group(2)   # inner JS (empty for src= tags)
 
-              # Google scripts skip කිරීම - AdSense/Analytics ආරක්ෂාව
-              google_keywords = [
-                  'adsbygoogle',
-                  'googletag',
-                  'google-analytics',
-                  'gtag(',
-                  'pagead2.googlesyndication',
-                  'googletagmanager',
-                  'google_ad',
-                  '_gaq'
-              ]
+              # src= tag (external script) — කිසිසේත් අතහරිනවා
+              if 'src=' in tag_attrs:
+                  return full_tag
 
-              for keyword in google_keywords:
-                  if keyword in js:
-                      print(f"⏭️ Skip කළා (Google script): {keyword}")
-                      return match.group(0)
+              # හිස් body
+              if len(js_body.strip()) < 10:
+                  return full_tag
 
-              # හිස් scripts skip කිරීම
-              if len(js.strip()) < 10:
-                  return match.group(0)
+              # Google script — skip
+              if is_google_script(tag_attrs, js_body):
+                  print(f"⏭️  Google script skip කළා")
+                  return full_tag
 
+              # Obfuscate
               print("🔒 Obfuscate කරනවා...")
-              obf = obfuscate_js(js)
-              return f'<script>{obf}</script>'
+              obf = obfuscate_js(js_body)
+              return f'<script{tag_attrs}>{obf}</script>'
 
-          # Script tags obfuscate කිරීම
-          result = re.sub(
-              r'<script>(.*?)</script>',
-              replace_script,
+          # src= tags ද ඇතුළත් කර match කිරීම
+          result_html = re.sub(
+              r'<script([^>]*)>(.*?)</script>',
+              replace_full_script_tag,
               html,
-              flags=re.DOTALL
+              flags=re.DOTALL | re.IGNORECASE,
           )
 
-          # DevTools විවෘත කිරීම වළකන layer එක එකතු කිරීම
-          devtools_block = """
-          <script>
+          # ── Anti-DevTools + Anti-Copy protection block ───────────────────
+          # (Google scripts නොවන නිසා obfuscate නොකර raw inject කරයි)
+          protection_block = r"""<script>
           (function(){
-            var threshold = 160;
-            setInterval(function(){
-              if(window.outerWidth - window.innerWidth > threshold ||
-                 window.outerHeight - window.innerHeight > threshold){
-                document.body.innerHTML = '';
-                window.location.reload();
-              }
-            }, 1000);
-            document.addEventListener('contextmenu', function(e){
-              e.preventDefault();
-            });
-            document.addEventListener('keydown', function(e){
-              if(e.key === 'F12' ||
-                (e.ctrlKey && e.shiftKey && e.key === 'I') ||
-                (e.ctrlKey && e.shiftKey && e.key === 'J') ||
-                (e.ctrlKey && e.key === 'U')){
-                e.preventDefault();
-              }
-            });
-          })();
-          </script>
-          """
+            'use strict';
 
-          # DevTools block </body> tag එකට කලින් එකතු කිරීම
-          result = result.replace('</body>', devtools_block + '</body>')
+            // 1. DevTools size detection
+            var _dt=false;
+            function _chkDT(){
+              var w=window.outerWidth-window.innerWidth;
+              var h=window.outerHeight-window.innerHeight;
+              if(w>160||h>160){
+                if(!_dt){_dt=true;document.body.innerHTML='';window.location.replace('https://www.google.com');}
+              } else { _dt=false; }
+            }
+            setInterval(_chkDT,800);
+
+            // 2. Right-click block
+            document.addEventListener('contextmenu',function(e){e.preventDefault();return false;});
+
+            // 3. Keyboard shortcuts block
+            document.addEventListener('keydown',function(e){
+              var k=e.key||'';
+              if(k==='F12'||(e.ctrlKey&&e.shiftKey&&(k==='I'||k==='J'||k==='C'))||(e.ctrlKey&&(k==='U'||k==='S'||k==='A'))||(e.metaKey&&e.altKey&&k==='I')){
+                e.preventDefault();e.stopPropagation();return false;
+              }
+            },true);
+
+            // 4. Text selection block
+            document.addEventListener('selectstart',function(e){e.preventDefault();return false;});
+            document.addEventListener('dragstart',function(e){e.preventDefault();return false;});
+
+            // 5. Print block
+            window.addEventListener('beforeprint',function(){
+              document.body.style.display='none';
+            });
+            window.addEventListener('afterprint',function(){
+              document.body.style.display='';
+            });
+
+            // 6. Console override (ඇතුළේ type කිරීම block)
+            try {
+              var _c=0;
+              Object.defineProperty(window,'_console_check',{
+                get:function(){_c++;if(_c>1){document.body.innerHTML='';}}
+              });
+            } catch(e){}
+
+          })();
+          </script>"""
+
+          # </head> tag කලින් CSP meta inject කිරීම (AdSense safe)
+          csp_meta = (
+              '<meta http-equiv="Content-Security-Policy" '
+              'content="default-src \'self\' https: data: blob:; '
+              'script-src \'self\' \'unsafe-inline\' \'unsafe-eval\' '
+              'https://pagead2.googlesyndication.com '
+              'https://googletagmanager.com '
+              'https://www.googletagmanager.com '
+              'https://google-analytics.com '
+              'https://www.google-analytics.com '
+              'https://googleadservices.com '
+              'https://adservice.google.com '
+              'https://tpc.googlesyndication.com; '
+              'frame-src https://googleads.g.doubleclick.net '
+              'https://tpc.googlesyndication.com;">'
+          )
+
+          if '</head>' in result_html:
+              result_html = result_html.replace('</head>', csp_meta + '\n</head>', 1)
+          else:
+              result_html = csp_meta + '\n' + result_html
+
+          # Protection block </body> කලින් inject
+          if '</body>' in result_html:
+              result_html = result_html.replace('</body>', protection_block + '\n</body>', 1)
+          else:
+              result_html += protection_block
 
           with open('dist/index.html', 'w', encoding='utf-8') as f:
-              f.write(result)
+              f.write(result_html)
 
-          print("✅ Maximum Protection සාර්ථකයි!")
+          print("✅ Maximum Protection Deploy සාර්ථකයි!")
           EOF
+
+      - name: Minify Final HTML
+        run: |
+          npx html-minifier-terser \
+            --input-dir dist \
+            --output-dir dist \
+            --file-ext html \
+            --collapse-whitespace \
+            --remove-comments \
+            --minify-js false \
+            --minify-css true \
+            || echo "⚠️ Minify warning (non-fatal)"
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
