@@ -1,33 +1,3 @@
-name: Safe Obfuscated Deploy
-on:
-  push:
-    branches:
-      - main
-  workflow_dispatch:
-
-jobs:
-  build_and_deploy:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Build and Obfuscate
-        env:
-          MY_RAW_CODE: ${{ secrets.MY_INDEX_HTML }}
-        run: |
-          echo "$MY_RAW_CODE" > raw_index.html
-          npm install javascript-obfuscator html-minifier-terser
-          mkdir -p dist
-
-          cat > build_script.py << 'PYEOF'
 import re, subprocess
 
 with open('raw_index.html', 'r', encoding='utf-8') as f:
@@ -294,8 +264,39 @@ with open('dist/robots.txt', 'w') as f:
     f.write(robots_txt)
 
 print("Maximum Protection Deploy සාර්ථකයි!")
-PYEOF
+```
 
+**Step 2**: `.github/workflows/deploy.yml` මෙසේ තබන්න (සරල, heredoc නැත):
+
+```yaml
+name: Safe Obfuscated Deploy
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Build and Obfuscate
+        env:
+          MY_RAW_CODE: ${{ secrets.MY_INDEX_HTML }}
+        run: |
+          echo "$MY_RAW_CODE" > raw_index.html
+          npm install javascript-obfuscator html-minifier-terser
+          mkdir -p dist
           python3 build_script.py
 
       - name: Minify Final HTML
