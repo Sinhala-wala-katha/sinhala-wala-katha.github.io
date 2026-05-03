@@ -1,0 +1,42 @@
+name: Safe Obfuscated Deploy
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Obfuscator
+        run: npm install -g javascript-obfuscator
+
+      - name: Create and Protect Index
+        run: |
+          # 1. Secret එකෙන් කෝඩ් එක අරගෙන index.html එක හැදීම
+          echo "${{ secrets.MY_INDEX_HTML }}" > index.html
+          
+          # 2. JavaScript විතරක් පටලවනවා (AdSense සහ SEO බේරගන්න)
+          # මෙතනදී HTML content එක obfuscate වෙන්නේ නැහැ, script එක විතරයි වෙන්නේ.
+          javascript-obfuscator index.html --output index.html \
+            --compact true \
+            --self-defending true \
+            --string-array true \
+            --string-array-encoding 'base64' \
+            --domain-lock 'sinhala-wala-katha.github.io'
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: .
+          publish_branch: gh-pages
