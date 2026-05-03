@@ -19,24 +19,23 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Build Index and Obfuscate
+      - name: Build and Obfuscate
         env:
-          MY_CODE: ${{ secrets.MY_INDEX_HTML }}
+          MY_RAW_CODE: ${{ secrets.MY_INDEX_HTML }}
         run: |
-          # 1. ආරක්ෂිතව Secret එකෙන් කෝඩ් එක ෆයිල් එකකට ගැනීම
-          printf "%s" "$MY_CODE" > raw_index.html
+          # 1. Secret එකේ තියෙන දේවල් ආරක්ෂිතව ගොනුවකට ගැනීම
+          echo "$MY_RAW_CODE" > raw_index.html
           
-          # 2. javascript-obfuscator ඉන්ස්ටෝල් කර රන් කිරීම
+          # 2. Obfuscator එක install කර පවත්වාගෙන යාම
           npm install javascript-obfuscator
+          
+          # 3. පටලැවීම සිදු කිරීම (Domain Lock සහ SEO Safe settings සමඟ)
           npx javascript-obfuscator raw_index.html --output index.html \
             --compact true \
             --self-defending true \
             --string-array true \
             --string-array-encoding 'base64' \
             --domain-lock 'sinhala-wala-katha.github.io'
-          
-          # 3. රෝ ෆයිල් එක මකා දැමීම
-          rm raw_index.html
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
@@ -44,3 +43,4 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: .
           publish_branch: gh-pages
+          force_orphan: true
